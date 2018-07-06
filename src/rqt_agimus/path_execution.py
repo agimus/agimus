@@ -25,7 +25,8 @@ class PathExecution(Plugin):
         self.setObjectName('PathExecution')
 
         while not rospy.has_param(PathExecution.StepByStepParam):
-            rospy.sleep(0.1)
+            from time import sleep
+            sleep(0.1)
 
         self.step_publisher = rospy.Publisher (PathExecution.StepTopic, EmptyMsg, queue_size=1)
         self.path_execution_publisher = rospy.Publisher (PathExecution.PathExecutionTopic, UInt32, queue_size=1)
