@@ -1,0 +1,9 @@
+<launch>
+  <group ns="agimus">
+    <node name="path_execution_fsm" pkg="agimus"
+      type="path_execution_fsm.py"
+      output="screen" />
+    <node name="path_execution_supervision" pkg="agimus"
+      type="rqt_path_execution" />
+  </group>
+</launch>

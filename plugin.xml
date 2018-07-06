@@ -1,0 +1,19 @@
+<library path="src">
+  <class name="Path execution"
+	 type="rqt_agimus.path_execution.PathExecution"
+	 base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A Python GUI plugin to supervise path execution in Agimus
+    </description>
+    <qtgui>
+      <group>
+        <label>Agimus</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to Agimus.</statustip>
+      </group>
+      <label>Agimus path execution</label>
+      <icon type="theme">applications-python</icon>
+      <statustip>Open a GUI to supervise path execution in Agimus.</statustip>
+    </qtgui>
+  </class>
+</library>
