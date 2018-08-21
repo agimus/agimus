@@ -14,9 +14,9 @@ from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
 
 class PathExecution(Plugin):
-    StepByStepParam = "step_by_step"
-    StepTopic = "step"
-    PathExecutionTopic = "start_path"
+    StepByStepParam = "/agimus/step_by_step"
+    StepTopic = "/agimus/step"
+    PathExecutionTopic = "/agimus/start_path"
     PublishStateService = "/agimus/sot/publish_state"
 
     def __init__(self, context):
@@ -26,6 +26,7 @@ class PathExecution(Plugin):
 
         while not rospy.has_param(PathExecution.StepByStepParam):
             from time import sleep
+            rospy.loginfo ("Waiting for parameter " + PathExecution.StepByStepParam)
             sleep(0.1)
 
         self.step_publisher = rospy.Publisher (PathExecution.StepTopic, EmptyMsg, queue_size=1)
