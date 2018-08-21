@@ -1,9 +1,22 @@
 <launch>
-  <group ns="agimus">
+  <arg name="machine" default="" />
+  <arg name="gui" default="true" />
+  <group ns="agimus" if="$(eval machine == '')" >
     <node name="path_execution_fsm" pkg="agimus"
       type="path_execution_fsm.py"
       output="screen" />
-    <node name="path_execution_supervision" pkg="agimus"
+    <node if="$(arg gui)"
+      name="path_execution_supervision" pkg="agimus"
+      type="rqt_path_execution" />
+  </group>
+  <group ns="agimus" unless="$(eval machine != '')" >
+    <node name="path_execution_fsm" pkg="agimus"
+      machine="$(arg machine)"
+      type="path_execution_fsm.py"
+      output="screen" />
+    <node if="$(arg gui)"
+      name="path_execution_supervision" pkg="agimus"
+      machine="$(arg machine)"
       type="rqt_path_execution" />
   </group>
 </launch>
