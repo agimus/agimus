@@ -37,8 +37,8 @@ class InitializePath(smach.State):
                 output_keys = [ "transitionId", "endStateId", "currentSection" ],
                 )
 
-        self.targetSrv = ros_tools.createServices (self, "/hpp/target", self.hppTargetSrvDict, serve=False)
-        self.targetPub = ros_tools.createTopics (self, "/hpp/target", self.hppTargetPubDict, subscribe=False)
+        self.targetSrv = ros_tools.createServiceProxies ("/hpp/target", self.hppTargetSrvDict)
+        self.targetPub = ros_tools.createPublishers ("/hpp/target", self.hppTargetPubDict)
         self.hppclient = HppClient (False)
 
     def execute (self, userdata):
@@ -101,9 +101,9 @@ class PlayPath (smach.State):
                 input_keys = [ "transitionId", "endStateId", ],
                 output_keys = [ ])
 
-        self.targetPub = ros_tools.createTopics (self, "/hpp/target", self.hppTargetPubDict, subscribe=False)
-        self.subscribers = ros_tools.createTopics (self, "", self.subscribersDict, subscribe=True)
-        self.serviceProxies = ros_tools.createServices (self, "", PlayPath.serviceProxiesDict, serve=False)
+        self.targetPub = ros_tools.createPublishers ("/hpp/target", self.hppTargetPubDict)
+        self.subscribers = ros_tools.createSubscribers (self, "", self.subscribersDict)
+        self.serviceProxies = ros_tools.createServiceProxies ("", PlayPath.serviceProxiesDict)
 
         self.done = False
         self.error = None
@@ -222,7 +222,7 @@ class WaitForInput(smach.State):
                 )
 
         rospy.logwarn("Create service WaitForInput")
-        self.services = ros_tools.createServices (self, "", self.serviceProxiesDict, serve = False)
+        self.services = ros_tools.createServiceProxies ("", self.serviceProxiesDict)
         self.hppclient = HppClient (False)
 
     def execute (self, userdata):
