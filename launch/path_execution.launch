@@ -9,7 +9,7 @@
       name="path_execution_supervision" pkg="agimus"
       type="rqt_path_execution" />
   </group>
-  <group ns="agimus" unless="$(eval machine != '')" >
+  <group ns="agimus" unless="$(eval machine == '')" >
     <node name="path_execution_fsm" pkg="agimus"
       machine="$(arg machine)"
       type="path_execution_fsm.py"
