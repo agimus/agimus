@@ -19,15 +19,7 @@ def wait_if_step_by_step(msg, level, time=0.1):
 
 class InitializePath(smach.State):
     hppTargetPubDict = {
-            "read_path": [ UInt32, 1 ],
             "read_subpath": [ ReadSubPath, 1 ],
-            }
-    hppTargetSrvDict = {
-            "reset_topics": [ std_srvs.srv.Empty, ],
-            "add_center_of_mass": [ SetString, ],
-            "add_operational_frame": [ SetString, ],
-            "add_center_of_mass_velocity": [ SetString, ],
-            "add_operational_frame_velocity": [ SetString, ],
             }
 
     def __init__(self):
@@ -37,7 +29,6 @@ class InitializePath(smach.State):
                 output_keys = [ "transitionId", "endStateId", "currentSection" ],
                 )
 
-        self.targetSrv = ros_tools.createServiceProxies ("/hpp/target", self.hppTargetSrvDict)
         self.targetPub = ros_tools.createPublishers ("/hpp/target", self.hppTargetPubDict)
         self.hppclient = HppClient (False)
 
