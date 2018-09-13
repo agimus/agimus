@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import smach, smach_ros, rospy
 from std_msgs.msg import UInt32, Empty, String, Float64
 from agimus_sot_msgs.msg import *
@@ -8,6 +9,12 @@ from agimus_hpp import ros_tools
 
 _outcomes = ["succeeded", "aborted", "preempted"]
 
+## Waits if the step by step level is lower than level
+#
+# The step by step level is stored in ROS param `step_by_step`.
+# \param msg human readable message.
+# \param level 0 means *always wait*.
+# \param time to wait **after** the message is received.
 def wait_if_step_by_step(msg, level, time=0.1):
     l = rospy.get_param ("step_by_step", 0)
     if type(l)==bool: l = 10 if l else 0
@@ -17,6 +24,9 @@ def wait_if_step_by_step(msg, level, time=0.1):
         rospy.wait_for_message ("step", Empty)
         rospy.sleep(time)
 
+## Initialize the trajectory publisher.
+#
+# See agimus_hpp.trajectory_publisher.HppOutputQueue
 class InitializePath(smach.State):
     hppTargetPubDict = {
             "read_subpath": [ ReadSubPath, 1 ],
@@ -50,6 +60,20 @@ class InitializePath(smach.State):
         rospy.loginfo("Start reading subpath.")
         return _outcomes[2]
 
+## Execute a sub-path
+#
+# There are three main steps in execution of a sub-path
+# \li pre-action tasks
+# \li execution of the path
+# \li post-action tasks, typically closing the gripper
+#
+# Between each step, the execution is paused until a message on topic
+# `/sot_hpp/control_norm_changed`.
+# \todo change name of topic `/sot_hpp/control_norm_changed`
+# \todo fix scheduling, the current code waits a bit before considering
+#       control_norm_changed and step_by_step messages.
+#
+# \todo error handling, like object not in gripper when closing it.
 class PlayPath (smach.State):
     hppTargetPubDict = {
             "publish": [ Empty, 1 ],
@@ -190,7 +214,19 @@ class PlayPath (smach.State):
 
         return _outcomes[0]
 
+## This class handles user input.
+#
+# \li wait for user input
+# \li obtain the waypoints of path from HPP
+# \li duplicated first waypoint. This ensures that SoT will start the motion
+#     from the right configuration.
+# \li get the transition for each sub-path and remove *fake transitions*.
+#     See comment in the code.
+#     \todo I think this should be done in HPP.
+# \li initalize the topics. \n
+#     (call services `hpp/target/reset_topics` and `agimus/sot/request_hpp_topics`)
 class WaitForInput(smach.State):
+    # Accessed services
     serviceProxiesDict = {
             "agimus" : {
                 "sot": {
@@ -258,7 +294,7 @@ class WaitForInput(smach.State):
                 endStateIds.append ( (manip.graph.getName (nid), tid[1]) )
             userdata.endStateIds = tuple (endStateIds)
             userdata.currentSection = -1
-            # TODO this should not be necessary
+            # TODO reset_topics should not be necessary
             self.services['hpp']['target']['reset_topics']()
             self.services["agimus"]['sot']['request_hpp_topics']()
             # TODO check that qs[0] and the current robot configuration are
