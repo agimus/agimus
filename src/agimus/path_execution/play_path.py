@@ -99,13 +99,14 @@ class PlayPath (smach.State):
                     'plug_sot': [ PlugSot, ],
                     'run_post_action': [ PlugSot, ],
                     'clear_queues': [ std_srvs.srv.Trigger, ],
-                    'read_queue': [ SetInt, ],
+                    'read_queue': [ ReadQueue, ],
                     'stop_reading_queue': [ std_srvs.srv.Empty, ],
                     },
                 },
             'hpp': {
                 'target': {
                     'publish_first': [ std_srvs.srv.Empty, ],
+                    'get_queue_size': [ std_srvs.srv.GetInt, ],
                     }
                 }
             }
@@ -161,7 +162,7 @@ class PlayPath (smach.State):
         if status.success:
             rospy.loginfo("Run pre-action")
             self.serviceProxies["hpp"]["target"]["publish_first"]()
-            self.serviceProxies['agimus']['sot']['read_queue'](10)
+            self.serviceProxies['agimus']['sot']['read_queue'](delay=1,minQueueSize=1)
 
             self._wait_for_control_norm_changed (rate, time_before_control_norm_changed)
             wait_if_step_by_step ("Pre-action ended.", 2)
@@ -169,6 +170,7 @@ class PlayPath (smach.State):
         rospy.loginfo("Publishing path")
         self.done = False
         self.serviceProxies['agimus']['sot']['clear_queues']()
+        queueSize = self.serviceProxies["hpp"]["target"]["get_queue_size"]()
         self.targetPub["publish"].publish()
 
         status = self.serviceProxies['agimus']['sot']['plug_sot'](userdata.transitionId[0], userdata.transitionId[1])
@@ -178,7 +180,14 @@ class PlayPath (smach.State):
 
         # self.control_norm_ok = False
         rospy.loginfo("Read queue")
-        self.serviceProxies['agimus']['sot']['read_queue'](10)
+        # SoT should wait to have a queue larger than 1. This ensures that read_queue won't run into
+        # an infinite loop for a very short path (i.e. one configuration only).
+        # SoT should not wait to have a queue larger than 100
+        # Delay is 1 if the queue is large enough or 10 if it is small.
+        # TODO Make maximum queue size and delay parameterizable.
+        queueSize = min(max (queueSize, 1), 100)
+        delay = 1 if queueSize > 10 else 10
+        self.serviceProxies['agimus']['sot']['read_queue'](delay=delay,minQueueSize=queueSize)
         # t = rospy.Time.now()
         # Wait for errors or publish done
         while not self.done:
