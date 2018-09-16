@@ -1,4 +1,8 @@
 ##### static variables ########
+GEPGITLAB_REPO=https://gepgitlab.laas.fr/
+GEPETTO_GEPGITLAB_REPO=${GEPGITLAB_REPO}/gepetto
+PYRENE_GEPGITLAB_REPO=${GEPGITLAB_REPO}/pyrene-dev
+
 AGIMUS_REPO=https://github.com/agimus
 LAAS_REPO=https://github.com/laas
 HPP_REPO=https://github.com/humanoid-path-planner
@@ -11,6 +15,9 @@ WGET=wget --quiet
 UNZIP=unzip -qq
 TAR=tar
 GIT_QUIET=--quiet
+
+_msg_done=$(shell echo "\033[0;32mdone\033[0m")
+_msg_warn=$(shell echo "\033[0;33mwarning\033[0m")
 
 ##### static variables ########
 

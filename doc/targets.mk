@@ -25,12 +25,14 @@ update:
 	done
 
 %.checkout:
-	if [ -d $(@:.checkout=) ]; then \
-		echo "$(@:.checkout=) already checkout out."; \
+	@if [ -d $(@:.checkout=) ]; then \
+		echo -n "$(@:.checkout=) already checkout out. "; \
 	else \
+	  echo -n "Checking out branch ${$(@:.checkout=)_branch} of ${$(@:.checkout=)_repository}/$(@:.checkout=) ... "; \
 		git clone ${GIT_QUIET} -b ${$(@:.checkout=)_branch} ${$(@:.checkout=)_repository}/$(@:.checkout=); \
 		cd ${SRC_DIR}/$(@:.checkout=) && git submodule ${GIT_QUIET} update --init; \
 	fi
+	@echo "${_msg_done}."
 
 %.update:
 	if [ "${$(@:.update=)_repository}" = "" ]; then \
@@ -51,15 +53,29 @@ update:
 	${MAKE} $(@:.configure=).configure_nodep
 
 %.configure_nodep:%.checkout
-	mkdir -p ${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}; \
-	cd ${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}; \
+	@echo -n "Configuring $(@:.configure_nodep=) ... "
+	@mkdir -p ${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}
+	@cd ${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}; \
 	cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_HPP_DIR} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
 			-DINSTALL_DOCUMENTATION=${INSTALL_DOCUMENTATION} \
 			-DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-g -O3 -DNDEBUG" \
-			${$(@:.configure_nodep=)_extra_flags} ..
+			${$(@:.configure_nodep=)_extra_flags} .. \
+			1> configure.stdout.cmake.log \
+			2> configure.stderr.cmake.log
+	@if [ -s "${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}/configure.stderr.cmake.log" ]; then \
+	 	echo "${_msg_warn}."; \
+	  echo "See logs in ${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}/configure.*.cmake.log"; \
+	else echo "${_msg_done}."; fi
 
 %.install:%.configure
-	${MAKE} -C ${SRC_DIR}/$(@:.install=)/${BUILD_FOLDER} install
+	@echo -n "Installing $(@:.install=) ... "
+	${MAKE} -C ${SRC_DIR}/$(@:.install=)/${BUILD_FOLDER} install \
+		1> ${SRC_DIR}/$(@:.install=)/${BUILD_FOLDER}/install.stdout.make.log \
+		2> ${SRC_DIR}/$(@:.install=)/${BUILD_FOLDER}/install.stderr.make.log
+	@if [ -s "${SRC_DIR}/$(@:.install=)/${BUILD_FOLDER}/install.stderr.make.log" ]; then \
+		echo "${_msg_warn}."; \
+		echo "See logs in ${SRC_DIR}/$(@:.install=)/${BUILD_FOLDER}/install.*.make.log"; \
+	else echo "${_msg_done}."; fi
 
 %.install_nodep:%.configure_nodep
 	${MAKE} -C ${SRC_DIR}/$(@:.install_nodep=)/${BUILD_FOLDER} install

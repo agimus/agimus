@@ -112,6 +112,9 @@ hpp-baxter_repository=${HPP_REPO}
 hpp_romeo_branch=master
 hpp_romeo_repository=${HPP_REPO}
 
+gerard-bauzil_branch=master
+gerard-bauzil_repository=${GEPETTO_GEPGITLAB_REPO}
+
 romeo_branch=master
 romeo_repository=${HPP_REPO}
 
