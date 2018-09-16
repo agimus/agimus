@@ -12,19 +12,16 @@ agimus_sot_msgs.configure.dep: agimus_sot_msgs.checkout
 
 
 ##### HPP Corba clients #######################################
-hpp-util.configure.dep: hpp-util.checkout
 ifeq (${HUMANOID}, TRUE)
 hpp-manipulation-corba.configure.dep: hpp-wholebody-step-corba.install \
 	hpp-manipulation-corba.checkout
 else
 hpp-manipulation-corba.configure.dep: hpp-corbaserver.install \
-	hpp-template-corba.install hpp-manipulation-corba.checkout
+	hpp-manipulation-corba.checkout
 endif
 hpp-corbaserver.configure.dep: hpp-corbaserver.checkout
 hpp-wholebody-step-corba.configure.dep: hpp-corbaserver.install \
-	hpp-template-corba.install \
 	hpp-wholebody-step-corba.checkout
-hpp-template-corba.configure.dep: hpp-util.install hpp-template-corba.checkout
 
 gepetto-viewer-corba.configure.dep: gepetto-viewer-corba.checkout
 hpp-gepetto-viewer.configure.dep: gepetto-viewer-corba.install \

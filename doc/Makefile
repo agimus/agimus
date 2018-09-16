@@ -53,12 +53,6 @@ agimus-vision_repository=${AGIMUS_REPO}
 agimus-demos_branch=master
 agimus-demos_repository=${AGIMUS_REPO}
 
-hpp-util_branch=devel
-hpp-util_repository=${HPP_REPO}
-
-hpp-template-corba_branch=devel
-hpp-template-corba_repository=${HPP_REPO}
-
 hpp-corbaserver_branch=devel
 hpp-corbaserver_repository=${HPP_REPO}
 hpp-corbaserver_extra_flags=-DCLIENT_ONLY=TRUE
