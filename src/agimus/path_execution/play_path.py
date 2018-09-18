@@ -106,7 +106,7 @@ class PlayPath (smach.State):
             'hpp': {
                 'target': {
                     'publish_first': [ std_srvs.srv.Empty, ],
-                    'get_queue_size': [ std_srvs.srv.GetInt, ],
+                    'get_queue_size': [ GetInt, ],
                     }
                 }
             }
@@ -170,7 +170,7 @@ class PlayPath (smach.State):
         rospy.loginfo("Publishing path")
         self.done = False
         self.serviceProxies['agimus']['sot']['clear_queues']()
-        queueSize = self.serviceProxies["hpp"]["target"]["get_queue_size"]()
+        queueSize = self.serviceProxies["hpp"]["target"]["get_queue_size"]().data
         self.targetPub["publish"].publish()
 
         status = self.serviceProxies['agimus']['sot']['plug_sot'](userdata.transitionId[0], userdata.transitionId[1])
@@ -179,7 +179,7 @@ class PlayPath (smach.State):
             return _outcomes[1]
 
         # self.control_norm_ok = False
-        rospy.loginfo("Read queue")
+        rospy.loginfo("Read queue (size {})".format(queueSize))
         # SoT should wait to have a queue larger than 1. This ensures that read_queue won't run into
         # an infinite loop for a very short path (i.e. one configuration only).
         # SoT should not wait to have a queue larger than 100
