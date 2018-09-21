@@ -57,7 +57,8 @@ class InitializePath(smach.State):
 
         wait_if_step_by_step ("Preparing to read subpath.", 3)
 
-        self.hppclient.manip.graph.selectGraph (transitionId[1])
+        manip = self.hppclient._manip()
+        manip.graph.selectGraph (transitionId[1])
         self.targetPub["read_subpath"].publish (ReadSubPath (userdata.pathId, start, length))
         rospy.loginfo("Start reading subpath.")
         return _outcomes[2]
