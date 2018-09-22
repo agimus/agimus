@@ -76,7 +76,7 @@ class PathExecution(Plugin):
         row+=1
 
         self.path_index_spin_box = QSpinBox ()
-        # step_by_step_spin_box.setRange(0,100000)
+        self.path_index_spin_box.setRange(0,10000)
         execute_path = QPushButton ("Execute path")
         execute_path.clicked.connect (lambda unused: self.path_execution_publisher.publish(self.path_index_spin_box.value()))
         self._layout.addWidget (self.path_index_spin_box , row, 1)
