@@ -1,16 +1,16 @@
 ##### static variables ########
-GEPGITLAB_REPO=https://gepgitlab.laas.fr/
-GEPETTO_GEPGITLAB_REPO=${GEPGITLAB_REPO}/gepetto
-PYRENE_GEPGITLAB_REPO=${GEPGITLAB_REPO}/pyrene-dev
+GEPGITLAB_WEBSITE      ?=https://gepgitlab.laas.fr/
+GEPETTO_GEPGITLAB_REPO ?=${GEPGITLAB_WEBSITE}gepetto
+PYRENE_DEV_REPO        ?=${GEPGITLAB_WEBSITE}pyrene-dev
 
-AGIMUS_REPO=https://github.com/agimus
-LAAS_REPO=https://github.com/laas
-HPP_REPO=https://github.com/humanoid-path-planner
-SOT_REPO=https://github.com/stack-of-tasks
-RETHINK_ROBOTICS_REPO=https://github.com/RethinkRobotics
-ROBOPTIM_REPO=https://github.com/roboptim
-TRAC_REPO=ssh://trac.laas.fr/git/jrl/robots/ros-hrp2
-PYRENE_DEV_REPO=git@gepgitlab.laas.fr:pyrene-dev
+GITHUB_WEBSITE         ?=https://github.com/
+AGIMUS_REPO            ?=${GITHUB_WEBSITE}agimus
+LAAS_REPO              ?=${GITHUB_WEBSITE}laas
+HPP_REPO               ?=${GITHUB_WEBSITE}humanoid-path-planner
+SOT_REPO               ?=${GITHUB_WEBSITE}stack-of-tasks
+RETHINK_ROBOTICS_REPO  ?=${GITHUB_WEBSITE}RethinkRobotics
+ROBOPTIM_REPO          ?=${GITHUB_WEBSITE}roboptim
+TRAC_REPO              ?=ssh://trac.laas.fr/git/jrl/robots/ros-hrp2
 
 WGET=wget --quiet
 UNZIP=unzip -qq
@@ -19,6 +19,9 @@ GIT_QUIET=--quiet
 
 define _status
   echo -n "\033[0;96m$1\033[0m"
+endef
+define _warning
+  echo -n "\033[0;33m$1\033[0m"
 endef
 _msg_done=$(shell echo "\033[0;32mdone\033[0m")
 _msg_warn=$(shell echo "\033[0;33mwarning\033[0m")

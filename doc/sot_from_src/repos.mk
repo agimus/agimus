@@ -1,7 +1,7 @@
 eigenpy_branch=master
 eigenpy_repository=${SOT_REPO}
 
-pinocchio_branch=master
+pinocchio_branch=v1.2.9
 pinocchio_repository=${SOT_REPO}
 
 dynamic-graph_branch=master
@@ -25,10 +25,20 @@ sot-tools_repository=${SOT_REPO}
 sot-dynamic-pinocchio_branch=master
 sot-dynamic-pinocchio_repository=${SOT_REPO}
 
+roscontrol_sot_branch=master
+roscontrol_sot_repository=${SOT_REPO}
+
 sot-talos_branch=master
 sot-talos_repository=${SOT_REPO}
 
 talos_data_branch=master
 talos_data_repository=${PYRENE_DEV_REPO}
 
+talos_metapkg_ros_control_sot_branch=master
+talos_metapkg_ros_control_sot_repository=${SOT_REPO}
+talos_metapkg_ros_control_sot_subdirs=sot_pyrene_bringup
+talos_metapkg_ros_control_sot_subdirs+=roscontrol_sot_talos
+talos_metapkg_ros_control_sot_subdirs+=talos_metapkg_ros_control_sot
+
 include agimus/doc/sot_from_src/dependencies.mk
+include agimus/doc/sot_from_src/robotpkg.mk

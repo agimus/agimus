@@ -11,8 +11,12 @@ endif
 # Whether to compute humanoid specific part
 HUMANOID=TRUE
 
+# If you have a SSH key:
+# GEPGITLAB_WEBSITE=git@gepgitlab.laas.fr:
+# GITHUB_WEBSITE=git@github.com:
+
 # For SoT developpers only
-INSTALL_SOT_FROM_SOURCE=TRUE
+# INSTALL_SOT_FROM_SOURCE=TRUE
 
 BUILD_TYPE=Release
 
