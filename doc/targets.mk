@@ -45,8 +45,7 @@ update:
 		git submodule ${GIT_QUIET} update; \
 	fi
 
-
-%.configure: %.configure.dep
+%.configure: %.configure.dep %.checkout
 	${MAKE} $(@:.configure=).configure_nodep
 
 %.configure_nodep:%.checkout
