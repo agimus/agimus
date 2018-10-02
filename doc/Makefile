@@ -11,12 +11,16 @@ endif
 # Whether to compute humanoid specific part
 HUMANOID=TRUE
 
+# For SoT developpers only
+INSTALL_SOT_FROM_SOURCE=TRUE
+
 BUILD_TYPE=Release
 
 INSTALL_DOCUMENTATION=ON
 
 config.mk  = ${SRC_DIR}/agimus/doc/config.mk
 targets.mk = ${SRC_DIR}/agimus/doc/targets.mk
+sot_repos.mk = ${SRC_DIR}/agimus/doc/sot_from_src/repos.mk
 ifeq ("$(wildcard ${config.mk})","")
 	# File does not exist
   ifneq ($(MAKECMDGOALS),bootstrap)
@@ -122,6 +126,10 @@ ifeq (${HUMANOID}, TRUE)
   hpp-manipulation-corba_extra_flags+=-DHPP_MANIPULATION_HAS_WHOLEBODY_STEP=TRUE
 else
   hpp-manipulation-corba_extra_flags+=-DHPP_MANIPULATION_HAS_WHOLEBODY_STEP=FALSE
+endif
+
+ifeq (${INSTALL_SOT_FROM_SOURCE}, TRUE)
+	include ${sot_repos.mk}
 endif
 
 ifeq ("$(wildcard ${targets.mk})","")

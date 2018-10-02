@@ -10,6 +10,7 @@ SOT_REPO=https://github.com/stack-of-tasks
 RETHINK_ROBOTICS_REPO=https://github.com/RethinkRobotics
 ROBOPTIM_REPO=https://github.com/roboptim
 TRAC_REPO=ssh://trac.laas.fr/git/jrl/robots/ros-hrp2
+PYRENE_DEV_REPO=git@gepgitlab.laas.fr:pyrene-dev
 
 WGET=wget --quiet
 UNZIP=unzip -qq
