@@ -26,9 +26,9 @@ update:
 
 %.checkout:
 	@if [ -d $(@:.checkout=) ]; then \
-		echo -n "$(@:.checkout=) already checkout out. "; \
+		$(call _status, "$(@:.checkout=) already checkout out. "); \
 	else \
-	  echo -n "Checking out branch ${$(@:.checkout=)_branch} of ${$(@:.checkout=)_repository}/$(@:.checkout=) ... "; \
+	  $(call _status, "Checking out branch ${$(@:.checkout=)_branch} of ${$(@:.checkout=)_repository}/$(@:.checkout=) ... "); \
 		git clone ${GIT_QUIET} -b ${$(@:.checkout=)_branch} ${$(@:.checkout=)_repository}/$(@:.checkout=); \
 		cd ${SRC_DIR}/$(@:.checkout=) && git submodule ${GIT_QUIET} update --init; \
 	fi
@@ -45,11 +45,11 @@ update:
 		git submodule ${GIT_QUIET} update; \
 	fi
 
-%.configure: %.configure.dep %.checkout
+%.configure: %.configure.dep
 	${MAKE} $(@:.configure=).configure_nodep
 
 %.configure_nodep:%.checkout
-	@echo -n "Configuring $(@:.configure_nodep=) ... "
+	$(call _status, "Configuring $(@:.configure_nodep=) ... ")
 	@mkdir -p ${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}
 	@cd ${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}; \
 	cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
@@ -64,7 +64,7 @@ update:
 	else echo "${_msg_done}."; fi
 
 %.install:%.configure
-	@echo -n "Installing $(@:.install=) ... "
+	$(call _status, "Installing $(@:.install=) ... ")
 	${MAKE} -C ${SRC_DIR}/$(@:.install=)/${BUILD_FOLDER} install \
 		1> ${SRC_DIR}/$(@:.install=)/${BUILD_FOLDER}/install.stdout.make.log \
 		2> ${SRC_DIR}/$(@:.install=)/${BUILD_FOLDER}/install.stderr.make.log

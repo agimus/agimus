@@ -17,6 +17,9 @@ UNZIP=unzip -qq
 TAR=tar
 GIT_QUIET=--quiet
 
+define _status
+  echo -n "\033[0;96m$1\033[0m"
+endef
 _msg_done=$(shell echo "\033[0;32mdone\033[0m")
 _msg_warn=$(shell echo "\033[0;33mwarning\033[0m")
 
