@@ -39,13 +39,10 @@ update:
 		echo "$(@:.update=) is not referenced"; \
 	else \
 		cd ${SRC_DIR}/$(@:.update=);\
-		git remote rm origin;\
-		git remote add origin ${$(@:.update=)_repository}/$(@:.update=);\
-		git fetch origin;\
-		git checkout -q --detach;\
-		git branch -f ${$(@:.update=)_branch} origin/${$(@:.update=)_branch};\
-		git checkout -q ${$(@:.update=)_branch};\
-		git submodule update; \
+		git remote set-url origin ${$(@:.update=)_repository}/$(@:.update=);\
+		git fetch ${GIT_QUIET} origin;\
+		git checkout ${GIT_QUIET} -B ${$(@:.update=)_branch} origin/${$(@:.update=)_branch};\
+		git submodule ${GIT_QUIET} update; \
 	fi
 
 
@@ -56,7 +53,7 @@ update:
 	@echo -n "Configuring $(@:.configure_nodep=) ... "
 	@mkdir -p ${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}
 	@cd ${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}; \
-	cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_HPP_DIR} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+	cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
 			-DINSTALL_DOCUMENTATION=${INSTALL_DOCUMENTATION} \
 			-DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-g -O3 -DNDEBUG" \
 			${$(@:.configure_nodep=)_extra_flags} .. \
