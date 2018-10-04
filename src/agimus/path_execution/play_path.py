@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import smach, smach_ros, rospy
 from std_msgs.msg import UInt32, Empty, String, Float64
+from dynamic_graph_bridge_msgs.msg import Vector
 from agimus_sot_msgs.msg import *
 from agimus_sot_msgs.srv import *
 from agimus_hpp.client import HppClient
@@ -241,7 +242,8 @@ class WaitForInput(smach.State):
             "agimus" : {
                 "sot": {
                     'request_hpp_topics': [ std_srvs.srv.Trigger, ],
-                    'plug_sot': [ PlugSot, ]
+                    'plug_sot': [ PlugSot, ],
+                    'set_base_pose': [ SetPose, ],
                     },
                 },
             'hpp': {
@@ -307,6 +309,11 @@ class WaitForInput(smach.State):
             # TODO reset_topics should not be necessary
             self.services['hpp']['target']['reset_topics']()
             self.services["agimus"]['sot']['request_hpp_topics']()
+            # Set base pose
+            # TODO shouldn't this be done by the estimation node ?
+            # moreover, this assumes that HPP has a free-floating base.
+            from agimus_hpp.tools import hppPoseToSotTransRPY
+            self.services["agimus"]['sot']['set_base_pose'](*hppPoseToSotTransRPY(tqs[0][:7]))
             # TODO check that qs[0] and the current robot configuration are
             # close
         except Exception, e:
