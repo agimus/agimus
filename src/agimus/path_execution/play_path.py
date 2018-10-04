@@ -40,7 +40,7 @@ class InitializePath(smach.State):
                 )
 
         self.targetPub = ros_tools.createPublishers ("/hpp/target", self.hppTargetPubDict)
-        self.hppclient = HppClient (False)
+        self.hppclient = HppClient ()
 
     def execute (self, userdata):
         userdata.currentSection += 1
@@ -260,7 +260,7 @@ class WaitForInput(smach.State):
 
         rospy.logwarn("Create service WaitForInput")
         self.services = ros_tools.createServiceProxies ("", self.serviceProxiesDict)
-        self.hppclient = HppClient (False)
+        self.hppclient = HppClient ()
 
     def execute (self, userdata):
         status = self.services["agimus"]['sot']['plug_sot']("", "")
