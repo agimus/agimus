@@ -36,7 +36,7 @@ class InitializePath(smach.State):
         super(InitializePath, self).__init__(
                 outcomes = _outcomes,
                 input_keys = [ "pathId", "times", "transitionIds", "endStateIds", "currentSection" ],
-                output_keys = [ "transitionId", "endStateId", "currentSection" ],
+                output_keys = [ "transitionId", "endStateId", "currentSection","duration" ],
                 )
 
         self.targetPub = ros_tools.createPublishers ("/hpp/target", self.hppTargetPubDict)
@@ -52,6 +52,7 @@ class InitializePath(smach.State):
         transitionId = userdata.transitionIds[userdata.currentSection]
         userdata.transitionId = transitionId
         userdata.endStateId   = userdata.endStateIds[userdata.currentSection]
+        userdata.duration     = length
 
         wait_if_step_by_step ("Preparing to read subpath.", 3)
 
@@ -114,7 +115,7 @@ class PlayPath (smach.State):
     def __init__(self):
         super(PlayPath, self).__init__(
                 outcomes = _outcomes,
-                input_keys = [ "transitionId", "endStateId", ],
+                input_keys = [ "transitionId", "endStateId", "duration" ],
                 output_keys = [ ])
 
         self.targetPub = ros_tools.createPublishers ("/hpp/target", self.hppTargetPubDict)
@@ -162,7 +163,7 @@ class PlayPath (smach.State):
         if status.success:
             rospy.loginfo("Run pre-action")
             self.serviceProxies["hpp"]["target"]["publish_first"]()
-            self.serviceProxies['agimus']['sot']['read_queue'](delay=1,minQueueSize=1)
+            self.serviceProxies['agimus']['sot']['read_queue'](delay=1,minQueueSize=1,expectedDuration=0)
 
             self._wait_for_control_norm_changed (rate, time_before_control_norm_changed)
             wait_if_step_by_step ("Pre-action ended.", 2)
@@ -187,7 +188,7 @@ class PlayPath (smach.State):
         # TODO Make maximum queue size and delay parameterizable.
         queueSize = min(max (queueSize, 1), 100)
         delay = 1 if queueSize > 10 else 10
-        self.serviceProxies['agimus']['sot']['read_queue'](delay=delay,minQueueSize=queueSize)
+        self.serviceProxies['agimus']['sot']['read_queue'](delay=delay,minQueueSize=queueSize,expectedDuration=userdata.duration)
         # t = rospy.Time.now()
         # Wait for errors or publish done
         while not self.done:
@@ -350,6 +351,7 @@ def makeStateMachine():
                     "preempted": "WaitForInput"},
                 remapping = {
                     "transitionId": "transitionId",
+                    "duration": "duration",
                     })
 
     sm.set_initial_state(["WaitForInput"])
