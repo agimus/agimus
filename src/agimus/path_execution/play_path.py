@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import smach, smach_ros, rospy
-from std_msgs.msg import UInt32, Empty, String, Float64
+from std_msgs.msg import UInt32, Int32, Empty, String, Float64
 from dynamic_graph_bridge_msgs.msg import Vector
 from agimus_sot_msgs.msg import *
 from agimus_sot_msgs.srv import *
@@ -16,6 +16,8 @@ _outcomes = ["succeeded", "aborted", "preempted"]
 # \param msg human readable message.
 # \param level 0 means *always wait*.
 # \param time to wait **after** the message is received.
+#
+# \todo It should be possible to handle errors while waiting for user input.
 def wait_if_step_by_step(msg, level, time=0.1):
     l = rospy.get_param ("step_by_step", 0)
     if type(l)==bool: l = 10 if l else 0
@@ -25,12 +27,30 @@ def wait_if_step_by_step(msg, level, time=0.1):
         rospy.wait_for_message ("step", Empty)
         rospy.sleep(time)
 
+class ErrorEvent (Exception):
+    def __init__ (self, value):
+        self.value = value
+    def __str__ (self):
+        return repr (self.value)
+
 ## Initialize the trajectory publisher.
 #
 # See agimus_hpp.trajectory_publisher.HppOutputQueue
 class InitializePath(smach.State):
     hppTargetPubDict = {
             "read_subpath": [ ReadSubPath, 1 ],
+            }
+    serviceProxiesDict = {
+            "agimus" : {
+                "sot": {
+                    'clear_queues': [ std_srvs.srv.Trigger, ],
+                    },
+                },
+            'hpp': {
+                'target': {
+                    'publish_first': [ std_srvs.srv.Trigger, ],
+                    }
+                }
             }
 
     def __init__(self):
@@ -41,6 +61,7 @@ class InitializePath(smach.State):
                 )
 
         self.targetPub = ros_tools.createPublishers ("/hpp/target", self.hppTargetPubDict)
+        self.serviceProxies = ros_tools.createServiceProxies ("", InitializePath.serviceProxiesDict)
         self.hppclient = HppClient ()
 
     def execute (self, userdata):
@@ -71,8 +92,7 @@ class InitializePath(smach.State):
 # \li post-action tasks, typically closing the gripper
 #
 # Between each step, the execution is paused until a message on topic
-# `/sot_hpp/control_norm_changed`.
-# \todo change name of topic `/sot_hpp/control_norm_changed`
+# `/agimus/sot/event/done`.
 # \todo fix scheduling, the current code waits a bit before considering
 #       control_norm_changed and step_by_step messages.
 #
@@ -84,14 +104,16 @@ class PlayPath (smach.State):
     subscribersDict = {
             "agimus" : {
                 "sot": {
-                    "error": [ String, "handleError" ],
-                    "interrupt": [ String, "handleInterrupt" ],
-                    "control_norm_changed": [ Float64, "handleControlNormChanged" ],
+                    "event" : {
+                        "error": [ Int32, "_handleEventError" ],
+                        "done" : [ Int32, "_handleEventDone" ],
+                        },
+                    "interrupt": [ String, "_handleInterrupt" ],
                     },
                 },
             "hpp" : {
                 "target": {
-                    "publish_done": [ Empty, "handleFinished" ]
+                    "publish_done": [ Empty, "_handlePublishDone" ]
                     }
                 }
             }
@@ -108,7 +130,7 @@ class PlayPath (smach.State):
                 },
             'hpp': {
                 'target': {
-                    'publish_first': [ std_srvs.srv.Empty, ],
+                    'publish_first': [ std_srvs.srv.Trigger, ],
                     'get_queue_size': [ GetInt, ],
                     }
                 }
@@ -117,114 +139,135 @@ class PlayPath (smach.State):
     def __init__(self):
         super(PlayPath, self).__init__(
                 outcomes = _outcomes,
-                input_keys = [ "transitionId", "endStateId", "duration" ],
-                output_keys = [ ])
+                input_keys = [ "transitionId", "endStateId", "duration", "queue_initialized" ],
+                output_keys = [ "queue_initialized" ])
 
         self.targetPub = ros_tools.createPublishers ("/hpp/target", self.hppTargetPubDict)
         self.subscribers = ros_tools.createSubscribers (self, "", self.subscribersDict)
         self.serviceProxies = ros_tools.createServiceProxies ("", PlayPath.serviceProxiesDict)
 
-        self.done = False
-        self.error = None
+        self.path_published = False
+        self.event_done = False
+        self.event_error = None
         self.interruption = None
-        self.control_norm_ok = True
+        self.event_done_count = 0
 
-    def handleError (self, msg):
-        self.error = msg.data
+    def _handleEventError (self, msg):
+        self.event_error = msg.data
 
-    def handleInterrupt (self, msg):
+    def _handleEventDone (self, msg):
+        self.event_done_count += 1
+        # self.event_done = msg.data
+        self.event_done = True
+        rospy.loginfo("Received event_done " + str(msg.data) + " (" + str(self.event_done_count) + ")")
+
+    def _handleInterrupt (self, msg):
         self.interruption = msg.data
         rospy.loginfo(str(msg.data))
-        self.done = True
+        self.path_published = True
 
-    def handleFinished (self, msg):
-        self.done = True
+    def _handlePublishDone (self, msg):
+        self.path_published = True
+        rospy.loginfo("Publishing path done.")
 
-    def handleControlNormChanged (self, msg):
-        self.control_norm_ok = msg.data < 1e-2
-
-    def _wait_for_control_norm_changed (self, rate, time_before_control_norm_changed):
-        # rospy.sleep(time_before_control_norm_changed)
-        try:
-            rospy.wait_for_message("/sot_hpp/control_norm_changed", Float64, time_before_control_norm_changed)
-        except rospy.ROSException:
-            pass
-        rospy.loginfo("Wait for event on /sot_hpp/control_norm_changed")
-        while not self.control_norm_ok:
+    def _wait_for_event_done (self, rate, msg):
+        rospy.loginfo("Wait for event on /agimus/sot/event/done")
+        while not self.event_done:
+            if self.event_error:
+                self.event_done = False
+                raise ErrorEvent ("ErrorEvent during "+msg)
+            if rospy.is_shutdown():
+                raise ErrorEvent ("Requested rospy shutdown")
             rate.sleep()
+        self.event_done_count -= 1
+        self.event_done = False
 
     def execute(self, userdata):
         rate = rospy.Rate (1000)
-        time_before_control_norm_changed = 1.
 
-        wait_if_step_by_step ("Beginning execution.", 3)
+        try:
+            wait_if_step_by_step ("Beginning execution.", 3)
 
-        # TODO Check that there the current SOT and the future SOT are compatible ?
-        self.serviceProxies['agimus']['sot']['clear_queues']()
-        status = self.serviceProxies['agimus']['sot']['run_pre_action'](userdata.transitionId[0], userdata.transitionId[1])
-        if status.success:
-            rospy.loginfo("Run pre-action")
-            self.serviceProxies["hpp"]["target"]["publish_first"]()
-            self.serviceProxies['agimus']['sot']['read_queue'](delay=1,minQueueSize=1,expectedDuration=0)
+            first_published = False
+            if not userdata.queue_initialized:
+                rsp = self.serviceProxies["hpp"]["target"]["publish_first"]()
+                if not rsp.success: raise ErrorEvent ("Could not initialize the queues in SoT: " + rsp.message)
+                # TODO make sure the message have been received
+                # It *should* be fine to do it with read_queue as the current
+                # sot *should* be "keep_posture"
+                self.serviceProxies['agimus']['sot']['clear_queues']()
+                userdata.queue_initialized = True
+                first_published = True
+                rospy.loginfo("Queues initialized.")
 
-            self._wait_for_control_norm_changed (rate, time_before_control_norm_changed)
-            wait_if_step_by_step ("Pre-action ended.", 2)
+            # TODO Check that there the current SOT and the future SOT are compatible ?
+            self.serviceProxies['agimus']['sot']['clear_queues']()
+            status = self.serviceProxies['agimus']['sot']['run_pre_action'](userdata.transitionId[0], userdata.transitionId[1])
+            if status.success:
+                rospy.loginfo("Start pre-action")
+                if not first_published:
+                    rsp = self.serviceProxies["hpp"]["target"]["publish_first"]()
+                    if not rsp.success: raise ErrorEvent (rsp.message)
+                    self.event_done = False
+                    self.serviceProxies['agimus']['sot']['read_queue'](delay=1,minQueueSize=1,duration=0)
+                    first_published = True
+                else:
+                    self.event_done = False
+                    self.serviceProxies['agimus']['sot']['read_queue'](delay=1,minQueueSize=0,duration=0)
 
-        rospy.loginfo("Publishing path")
-        self.done = False
-        self.serviceProxies['agimus']['sot']['clear_queues']()
-        queueSize = self.serviceProxies["hpp"]["target"]["get_queue_size"]().data
-        self.targetPub["publish"].publish()
+                self._wait_for_event_done (rate, "pre-actions")
+                wait_if_step_by_step ("Pre-action ended.", 2)
 
-        status = self.serviceProxies['agimus']['sot']['plug_sot'](userdata.transitionId[0], userdata.transitionId[1])
-        if not status.success:
-            rospy.logerr(status.msg)
-            return _outcomes[1]
+            rospy.loginfo("Publishing path")
+            self.path_published = False
+            self.serviceProxies['agimus']['sot']['clear_queues']()
+            queueSize = self.serviceProxies["hpp"]["target"]["get_queue_size"]().data
+            self.targetPub["publish"].publish()
 
-        # self.control_norm_ok = False
-        rospy.loginfo("Read queue (size {})".format(queueSize))
-        # SoT should wait to have a queue larger than 1. This ensures that read_queue won't run into
-        # an infinite loop for a very short path (i.e. one configuration only).
-        # SoT should not wait to have a queue larger than 100
-        # Delay is 1 if the queue is large enough or 10 if it is small.
-        # TODO Make maximum queue size and delay parameterizable.
-        queueSize = min(max (queueSize, 1), 100)
-        delay = 1 if queueSize > 10 else 10
-        self.serviceProxies['agimus']['sot']['read_queue'](delay=delay,minQueueSize=queueSize,expectedDuration=userdata.duration)
-        # t = rospy.Time.now()
-        # Wait for errors or publish done
-        while not self.done:
-            if self.error is not None:
-                # TODO handle error
-                rospy.logerr(str(self.error))
-                self.error = None
+            status = self.serviceProxies['agimus']['sot']['plug_sot'](userdata.transitionId[0], userdata.transitionId[1])
+            if not status.success:
+                rospy.logerr(status.msg)
                 return _outcomes[1]
-            rate.sleep()
-        rospy.loginfo("Publishing path done.")
-        if self.interruption is not None:
-            rospy.logerr(str(self.interruption))
-            self.interruption = None
-            return _outcomes[2]
 
-        # Sometimes, the function triggering /sot_hpp/control_norm_changed is a little slow to update
-        # and the movement is skipped
-        # This won't be a problem when we have a better mean of detecting the end of a movement
-        # t = rospy.Time.now() - t
-        # self._wait_for_control_norm_changed (rate, max(0,time_before_control_norm_changed-t.to_sec()))
-        self._wait_for_control_norm_changed (rate, time_before_control_norm_changed)
-        # self.serviceProxies['sot']['stop_reading_queue']()
+            # self.control_norm_ok = False
+            rospy.loginfo("Read queue (size {})".format(queueSize))
+            # SoT should wait to have a queue larger than 1. This ensures that read_queue won't run into
+            # an infinite loop for a very short path (i.e. one configuration only).
+            # SoT should not wait to have a queue larger than 100
+            # Delay is 1 if the queue is large enough or 10 if it is small.
+            # TODO Make maximum queue size and delay parameterizable.
+            queueSize = min(max (queueSize, 1), 100)
+            delay = 1 if queueSize > 10 else 10
+            self.event_done = False
+            self.serviceProxies['agimus']['sot']['read_queue'](delay=delay,minQueueSize=queueSize,duration=userdata.duration)
 
-        wait_if_step_by_step ("Action ended.", 2)
+            if self.interruption is not None:
+                rospy.logerr(str(self.interruption))
+                self.interruption = None
+                return _outcomes[2]
 
-        # Run post action if any
-        rospy.loginfo("Run post-action")
-        status = self.serviceProxies['agimus']['sot']['run_post_action'](userdata.endStateId[0], userdata.endStateId[1])
+            self._wait_for_event_done (rate, "main action")
+            while not self.path_published:
+                # rospy.logerr("Path publication is not over yet.")
+                rate.sleep()
+                # TODO stop publishing queues
 
-        if status.success:
-            self._wait_for_control_norm_changed (rate, time_before_control_norm_changed)
-            wait_if_step_by_step ("Post-action ended.", 2)
+            wait_if_step_by_step ("Action ended.", 2)
 
-        return _outcomes[0]
+            # Run post action if any
+            rospy.loginfo("Start post-action")
+            self.event_done = False
+            status = self.serviceProxies['agimus']['sot']['run_post_action'](userdata.endStateId[0], userdata.endStateId[1])
+
+            if status.success:
+                self._wait_for_event_done (rate, "post-action")
+                wait_if_step_by_step ("Post-action ended.", 2)
+
+            return _outcomes[0]
+        except ErrorEvent as e:
+            # TODO interrupt path publication.
+            rospy.logerr(str(e))
+            return _outcomes[1]
 
 ## This class handles user input.
 #
@@ -258,7 +301,7 @@ class WaitForInput(smach.State):
         super(WaitForInput, self).__init__(
                 outcomes = [ "succeeded", "aborted" ],
                 input_keys = [ ],
-                output_keys = [ "pathId", "times", "transitionIds", "endStateIds", "currentSection" ],
+                output_keys = [ "pathId", "times", "transitionIds", "endStateIds", "currentSection", "queue_initialized" ],
                 )
 
         rospy.logwarn("Create service WaitForInput")
@@ -271,6 +314,7 @@ class WaitForInput(smach.State):
         pid = res.data
         rospy.loginfo("Requested to start path " + str(pid))
         userdata.pathId = pid
+        userdata.queue_initialized = False
         try:
             hpp = self.hppclient._hpp()
             manip = self.hppclient._manip()
@@ -315,6 +359,7 @@ class WaitForInput(smach.State):
             # moreover, this assumes that HPP has a free-floating base.
             from agimus_hpp.tools import hppPoseToSotTransRPY
             self.services["agimus"]['sot']['set_base_pose'](*hppPoseToSotTransRPY(tqs[0][:7]))
+            rospy.sleep(0.001)
             # TODO check that qs[0] and the current robot configuration are
             # close
         except Exception, e:
@@ -340,6 +385,7 @@ def makeStateMachine():
                     "transitionIds": "transitionIds",
                     "endStateIds": "endStateIds",
                     "currentSection": "currentSection",
+                    "queue_initialized": "queue_initialized",
                     })
         smach.StateMachine.add ('Init', InitializePath(),
                 transitions = {
@@ -360,6 +406,7 @@ def makeStateMachine():
                 remapping = {
                     "transitionId": "transitionId",
                     "duration": "duration",
+                    "queue_initialized": "queue_initialized",
                     })
 
     sm.set_initial_state(["WaitForInput"])
