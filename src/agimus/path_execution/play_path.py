@@ -306,12 +306,22 @@ class WaitForInput(smach.State):
 
         rospy.logwarn("Create service WaitForInput")
         self.services = ros_tools.createServiceProxies ("", self.serviceProxiesDict)
+        self.status_srv = rospy.Service ('status', std_srvs.srv.Trigger, self.getStatus)
         self.hppclient = HppClient ()
+        self.ready = False
+        self.status = "not started"
+
+    def getStatus (self, empty):
+        return self.ready, self.status
 
     def execute (self, userdata):
         status = self.services["agimus"]['sot']['plug_sot']("", "")
+        self.status = "waiting"
+        self.ready = True
         res = rospy.wait_for_message ("start_path", UInt32)
+        self.ready = False
         pid = res.data
+        self.status = "playing path " + str(pid)
         rospy.loginfo("Requested to start path " + str(pid))
         userdata.pathId = pid
         userdata.queue_initialized = False
