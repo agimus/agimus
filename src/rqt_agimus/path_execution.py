@@ -1,9 +1,9 @@
-from python_qt_binding.QtWidgets import QGridLayout, QWidget, QLabel, QSpinBox, QPushButton, QFrame, QMessageBox
+from python_qt_binding.QtWidgets import QGridLayout, QWidget, QLabel, QSpinBox, QPushButton, QFrame, QMessageBox, QSizePolicy
 from python_qt_binding.QtCore import Qt
 from qt_gui.plugin import Plugin
 
 import rospy
-from std_msgs.msg import Empty as EmptyMsg, UInt32
+from std_msgs.msg import Empty as EmptyMsg, UInt32, Int32
 from std_srvs.srv import Empty as EmptySrv
 
 import os
@@ -18,6 +18,7 @@ class PathExecution(Plugin):
     StepTopic = "/agimus/step"
     PathExecutionTopic = "/agimus/start_path"
     PublishStateService = "/agimus/sot/publish_state"
+    EventDoneTopic = "/agimus/sot/event/done"
 
     def __init__(self, context):
         super(PathExecution, self).__init__(context)
@@ -31,6 +32,7 @@ class PathExecution(Plugin):
 
         self.step_publisher = rospy.Publisher (PathExecution.StepTopic, EmptyMsg, queue_size=1)
         self.path_execution_publisher = rospy.Publisher (PathExecution.PathExecutionTopic, UInt32, queue_size=1)
+        self.event_done_publisher = rospy.Publisher (PathExecution.EventDoneTopic, Int32, queue_size=1)
 
         # Create QWidget
         self._widget = QWidget()
@@ -92,6 +94,23 @@ class PathExecution(Plugin):
         publish_state = QPushButton ("Request SoT to publish its state")
         publish_state.clicked.connect (lambda u: self.publishState())
         self._layout.addWidget (publish_state, row, 2)
+        row+=1
+
+        send_event_done = QPushButton ("Send event done.")
+        send_event_done.clicked.connect (lambda x: self.event_done_publisher.publish(0))
+        self._layout.addWidget (send_event_done, row, 2)
+        row+=1
+
+        geom_simu_paused = QPushButton ("Pause geometric simu.")
+        geom_simu_paused.setCheckable(True)
+        geom_simu_paused.setChecked(rospy.get_param("/geometric_simu/paused", False))
+        geom_simu_paused.clicked.connect (lambda checked: rospy.set_param("/geometric_simu/paused", checked))
+        self._layout.addWidget (geom_simu_paused, row, 2)
+        row+=1
+
+        space = QWidget ()
+        space.setSizePolicy (QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self._layout.addWidget (space, row, 1, 1, 2)
         row+=1
 
         #self._layout.addWidget (None, row, 0, 1, 4)
