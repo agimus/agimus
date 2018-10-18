@@ -41,7 +41,9 @@ update:
 		cd ${SRC_DIR}/$(@:.update=);\
 		git remote set-url origin ${$(@:.update=)_repository}/$(@:.update=);\
 		git fetch ${GIT_QUIET} origin;\
-		git checkout ${GIT_QUIET} -B ${$(@:.update=)_branch} origin/${$(@:.update=)_branch};\
+		( git tag -l | grep "^${$(@:.update=)_branch}$$" >/dev/null \
+		  && git checkout ${GIT_QUIET} ${$(@:.update=)_branch} \
+		) || git checkout ${GIT_QUIET} -B ${$(@:.update=)_branch} origin/${$(@:.update=)_branch};\
 		git submodule ${GIT_QUIET} update; \
 	fi
 
