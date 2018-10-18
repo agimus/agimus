@@ -1,8 +1,9 @@
 eigenpy_branch=master
 eigenpy_repository=${SOT_REPO}
 
-pinocchio_branch=v1.2.9
+pinocchio_branch=v1.3.0
 pinocchio_repository=${SOT_REPO}
+pinocchio_extra_flags=-DBUILD_UNIT_TESTS=OFF
 
 dynamic-graph_branch=master
 dynamic-graph_repository=${SOT_REPO}
