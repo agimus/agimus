@@ -28,10 +28,10 @@ update:
 	@if [ -d $(@:.checkout=) ]; then \
 		${MAKE} $(@:.checkout=).status; \
 	else \
-	  @$(call _status,"Checking out branch ${$(@:.checkout=)_branch} of ${$(@:.checkout=)_repository}/$(@:.checkout=) ... "); \
+	  $(call _status,"Checking out branch ${$(@:.checkout=)_branch} of ${$(@:.checkout=)_repository}/$(@:.checkout=) ... "); \
 		git clone ${GIT_QUIET} -b ${$(@:.checkout=)_branch} ${$(@:.checkout=)_repository}/$(@:.checkout=); \
 		cd ${SRC_DIR}/$(@:.checkout=) && git submodule ${GIT_QUIET} update --init; \
-	  @echo "${_msg_done}."; \
+	  echo "${_msg_done}."; \
 	fi
 
 %.update:
