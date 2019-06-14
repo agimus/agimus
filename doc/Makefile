@@ -123,6 +123,9 @@ gerard-bauzil_repository=${GEPETTO_GEPGITLAB_REPO}
 romeo_branch=master
 romeo_repository=${HPP_REPO}
 
+hpp_tiago_branch=master
+hpp_tiago_repository=${HPP_REPO}
+
 ifeq (${INSTALL_SOT_FROM_SOURCE}, TRUE)
 	include ${sot_repos.mk}
 endif
