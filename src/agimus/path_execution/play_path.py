@@ -71,7 +71,7 @@ class InitializePath(smach.State):
         self.serviceProxies = ros_tools.createServiceProxies(
             "", InitializePath.serviceProxiesDict
         )
-        self.hppclient = HppClient()
+        self.hppclient = HppClient(context="corbaserver")
 
     def execute(self, userdata):
         userdata.currentSection += 1
@@ -343,8 +343,10 @@ class WaitForInput(smach.State):
 
         rospy.logwarn("Create service WaitForInput")
         self.services = ros_tools.createServiceProxies("", self.serviceProxiesDict)
+        rospy.logwarn("fuck")
         self.status_srv = rospy.Service("status", std_srvs.srv.Trigger, self.getStatus)
-        self.hppclient = HppClient()
+        rospy.logwarn("you")
+        self.hppclient = HppClient(context="corbaserver")
         self.ready = False
         self.status = "not started"
 
