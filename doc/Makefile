@@ -8,9 +8,6 @@ ifndef INSTALL_DIR
 INSTALL_DIR=${DEVEL_HPP_DIR}/install
 endif
 
-# Whether to compute humanoid specific part
-HUMANOID=TRUE
-
 # If you have a SSH key:
 # GEPGITLAB_WEBSITE=git@gepgitlab.laas.fr:
 # GITHUB_WEBSITE=git@github.com:
@@ -125,12 +122,6 @@ gerard-bauzil_repository=${GEPETTO_GEPGITLAB_REPO}
 
 romeo_branch=master
 romeo_repository=${HPP_REPO}
-
-ifeq (${HUMANOID}, TRUE)
-  hpp-manipulation-corba_extra_flags+=-DHPP_MANIPULATION_HAS_WHOLEBODY_STEP=TRUE
-else
-  hpp-manipulation-corba_extra_flags+=-DHPP_MANIPULATION_HAS_WHOLEBODY_STEP=FALSE
-endif
 
 ifeq (${INSTALL_SOT_FROM_SOURCE}, TRUE)
 	include ${sot_repos.mk}

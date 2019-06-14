@@ -1,4 +1,4 @@
-##### Agimus #######################################
+##### Agimus #######################################
 agimus-demos.configure.dep:
 agimus-vision.configure.dep:
 agimus-hpp.configure.dep: hpp-corbaserver.install hpp-manipulation-corba.install \
@@ -8,14 +8,9 @@ agimus.configure.dep: agimus-hpp.install agimus_sot_msgs.install
 agimus_sot_msgs.configure.dep:
 
 
-##### HPP Corba clients #######################################
-ifeq (${HUMANOID}, TRUE)
-hpp-manipulation-corba.configure.dep: hpp-wholebody-step-corba.install
-else
+##### HPP Corba clients #######################################
 hpp-manipulation-corba.configure.dep: hpp-corbaserver.install
-endif
 hpp-corbaserver.configure.dep:
-hpp-wholebody-step-corba.configure.dep: hpp-corbaserver.install
 
 gepetto-viewer-corba.configure.dep:
 hpp-gepetto-viewer.configure.dep: gepetto-viewer-corba.install \
@@ -23,7 +18,7 @@ hpp-gepetto-viewer.configure.dep: gepetto-viewer-corba.install \
 
 hpp-tools.configure.dep:
 
-##### Robot models #######################################
+##### Robot models #######################################
 robot_model_py.configure.dep:
 robot_capsule_urdf.configure.dep: robot_model_py.install
 hpp-hrp2.configure.dep: hrp2-14-description.install hpp-corbaserver.install
