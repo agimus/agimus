@@ -25,11 +25,13 @@ update:
 	done
 
 %.checkout:
-	if [ -d $(@:.checkout=) ]; then \
-		echo "$(@:.checkout=) already checkout out."; \
+	@if [ -d $(@:.checkout=) ]; then \
+		${MAKE} $(@:.checkout=).status; \
 	else \
+	  $(call _status,"Checking out branch ${$(@:.checkout=)_branch} of ${$(@:.checkout=)_repository}/$(@:.checkout=) ... "); \
 		git clone ${GIT_QUIET} -b ${$(@:.checkout=)_branch} ${$(@:.checkout=)_repository}/$(@:.checkout=); \
 		cd ${SRC_DIR}/$(@:.checkout=) && git submodule ${GIT_QUIET} update --init; \
+	  echo "${_msg_done}."; \
 	fi
 
 %.update:
@@ -37,32 +39,68 @@ update:
 		echo "$(@:.update=) is not referenced"; \
 	else \
 		cd ${SRC_DIR}/$(@:.update=);\
-		git remote rm origin;\
-		git remote add origin ${$(@:.update=)_repository}/$(@:.update=);\
-		git fetch origin;\
-		git checkout -q --detach;\
-		git branch -f ${$(@:.update=)_branch} origin/${$(@:.update=)_branch};\
-		git checkout -q ${$(@:.update=)_branch};\
-		git submodule update; \
+		git remote set-url origin ${$(@:.update=)_repository}/$(@:.update=);\
+		git fetch ${GIT_QUIET} origin;\
+		( git tag -l | grep "^${$(@:.update=)_branch}$$" >/dev/null \
+		  && git checkout ${GIT_QUIET} ${$(@:.update=)_branch} \
+		) || git checkout ${GIT_QUIET} -B ${$(@:.update=)_branch} origin/${$(@:.update=)_branch};\
+		git submodule ${GIT_QUIET} update; \
 	fi
-
 
 %.configure: %.configure.dep
 	${MAKE} $(@:.configure=).configure_nodep
 
 %.configure_nodep:%.checkout
-	mkdir -p ${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}; \
-	cd ${SRC_DIR}/$(@:.configure_nodep=)/${BUILD_FOLDER}; \
-	cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_HPP_DIR} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+	@$(call _status,"Configuring $(@:.configure_nodep=) ... ")
+	@if [ -n "$($(@:.configure_nodep=)_subdirs)" ]; then \
+		echo ""; \
+		for d in $($(@:.configure_nodep=)_subdirs); do \
+			$(call _status,"- $$d: "); \
+		  ${MAKE} $(@:.configure_nodep=)___$${d}.run_cmake; \
+		done; \
+	else \
+		${MAKE} $(@:.configure_nodep=).run_cmake; \
+	fi
+
+%.run_cmake:
+	$(eval curdir := $(subst ___,/,$(@:.run_cmake=)))
+	@mkdir -p ${SRC_DIR}/$(curdir)/${BUILD_FOLDER}
+	@cd ${SRC_DIR}/$(curdir)/${BUILD_FOLDER}; \
+	cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
 			-DINSTALL_DOCUMENTATION=${INSTALL_DOCUMENTATION} \
 			-DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-g -O3 -DNDEBUG" \
-			${$(@:.configure_nodep=)_extra_flags} ..
+			${$(@:.run_cmake=)_extra_flags} .. \
+			1> configure.stdout.cmake.log \
+			2> configure.stderr.cmake.log
+	@if [ -s "${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/configure.stderr.cmake.log" ]; then \
+	 	echo "${_msg_warn}."; \
+	  echo "See logs in ${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/configure.*.cmake.log"; \
+	else echo "${_msg_done}."; fi
 
-%.install:%.configure
-	${MAKE} -C ${SRC_DIR}/$(@:.install=)/${BUILD_FOLDER} install
+%.install:%.configure.dep
+	@${MAKE} $(@:.install=).install_nodep
 
 %.install_nodep:%.configure_nodep
-	${MAKE} -C ${SRC_DIR}/$(@:.install_nodep=)/${BUILD_FOLDER} install
+	@$(call _status,"Installing $(@:.install_nodep=) ... ")
+	@if [ -n "$($(@:.install_nodep=)_subdirs)" ]; then \
+		echo ""; \
+		for d in $($(@:.install_nodep=)_subdirs); do \
+			$(call _status,"- $$d: "); \
+		  ${MAKE} $(@:.install_nodep=)___$${d}.run_make; \
+		done; \
+	else \
+		${MAKE} $(@:.install_nodep=).run_make; \
+	fi
+
+%.run_make:
+	$(eval curdir := $(subst ___,/,$(@:.run_make=)))
+	@${MAKE} -C ${SRC_DIR}/$(curdir)/${BUILD_FOLDER} install \
+		1> ${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/install.stdout.make.log \
+		2> ${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/install.stderr.make.log
+	@if [ -s "${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/install.stderr.make.log" ]; then \
+		echo "${_msg_warn}."; \
+		echo "See logs in ${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/install.*.make.log"; \
+	else echo "${_msg_done}."; fi
 
 %.uninstall:
 	${MAKE} -C ${SRC_DIR}/$(@:.uninstall=)/${BUILD_FOLDER} uninstall

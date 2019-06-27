@@ -8,8 +8,12 @@ ifndef INSTALL_DIR
 INSTALL_DIR=${DEVEL_HPP_DIR}/install
 endif
 
-# Whether to compute humanoid specific part
-HUMANOID=TRUE
+# If you have a SSH key:
+# GEPGITLAB_WEBSITE=git@gepgitlab.laas.fr:
+# GITHUB_WEBSITE=git@github.com:
+
+# For SoT developpers only
+# INSTALL_SOT_FROM_SOURCE=TRUE
 
 BUILD_TYPE=Release
 
@@ -17,6 +21,7 @@ INSTALL_DOCUMENTATION=ON
 
 config.mk  = ${SRC_DIR}/agimus/doc/config.mk
 targets.mk = ${SRC_DIR}/agimus/doc/targets.mk
+sot_repos.mk = ${SRC_DIR}/agimus/doc/sot_from_src/repos.mk
 ifeq ("$(wildcard ${config.mk})","")
 	# File does not exist
   ifneq ($(MAKECMDGOALS),bootstrap)
@@ -52,12 +57,6 @@ agimus-vision_repository=${AGIMUS_REPO}
 
 agimus-demos_branch=master
 agimus-demos_repository=${AGIMUS_REPO}
-
-hpp-util_branch=devel
-hpp-util_repository=${HPP_REPO}
-
-hpp-template-corba_branch=devel
-hpp-template-corba_repository=${HPP_REPO}
 
 hpp-corbaserver_branch=devel
 hpp-corbaserver_repository=${HPP_REPO}
@@ -118,13 +117,17 @@ hpp-baxter_repository=${HPP_REPO}
 hpp_romeo_branch=master
 hpp_romeo_repository=${HPP_REPO}
 
+gerard-bauzil_branch=master
+gerard-bauzil_repository=${GEPETTO_GEPGITLAB_REPO}
+
 romeo_branch=master
 romeo_repository=${HPP_REPO}
 
-ifeq (${HUMANOID}, TRUE)
-  hpp-manipulation-corba_extra_flags+=-DHPP_MANIPULATION_HAS_WHOLEBODY_STEP=TRUE
-else
-  hpp-manipulation-corba_extra_flags+=-DHPP_MANIPULATION_HAS_WHOLEBODY_STEP=FALSE
+hpp_tiago_branch=master
+hpp_tiago_repository=${HPP_REPO}
+
+ifeq (${INSTALL_SOT_FROM_SOURCE}, TRUE)
+	include ${sot_repos.mk}
 endif
 
 ifeq ("$(wildcard ${targets.mk})","")
