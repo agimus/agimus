@@ -343,9 +343,7 @@ class WaitForInput(smach.State):
 
         rospy.logwarn("Create service WaitForInput")
         self.services = ros_tools.createServiceProxies("", self.serviceProxiesDict)
-        rospy.logwarn("fuck")
         self.status_srv = rospy.Service("status", std_srvs.srv.Trigger, self.getStatus)
-        rospy.logwarn("you")
         self.hppclient = HppClient(context="corbaserver")
         self.ready = False
         self.status = "not started"
