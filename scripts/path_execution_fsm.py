@@ -2,7 +2,7 @@
 from agimus.path_execution import makeStateMachine
 import rospy
 
-rospy.init_node ('agimus')
+rospy.init_node("agimus")
 sm, sis = makeStateMachine()
 
 sis.start()
