@@ -192,7 +192,7 @@ class PlayPath(smach.State):
         while not self.event_done:
             if self.event_error:
                 self.event_done = False
-                raise ErrorEvent("ErrorEvent during " + msg)
+                raise ErrorEvent("ErrorEvent during {}: {}".format(msg, self.event_error))
             if rospy.is_shutdown():
                 raise ErrorEvent("Requested rospy shutdown")
             rate.sleep()
