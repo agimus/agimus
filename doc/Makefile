@@ -65,10 +65,6 @@ hpp-corbaserver_branch=devel
 hpp-corbaserver_repository=${HPP_REPO}
 hpp-corbaserver_extra_flags=-DCLIENT_ONLY=TRUE
 
-hpp-wholebody-step-corba_branch=devel
-hpp-wholebody-step-corba_repository=${HPP_REPO}
-hpp-wholebody-step-corba_extra_flags=-DCLIENT_ONLY=TRUE
-
 hrp2-14-description_branch=master
 hrp2-14-description_repository=${TRAC_REPO}
 
