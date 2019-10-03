@@ -6,7 +6,7 @@ agimus-hpp.configure.dep: hpp-corbaserver.install hpp-manipulation-corba.install
 agimus-sot.configure.dep: hpp-manipulation-corba.install agimus_sot_msgs.install
 agimus.configure.dep: agimus-hpp.install agimus_sot_msgs.install
 agimus_sot_msgs.configure.dep:
-
+agimus-doc.configure.dep: agimus.install agimus-hpp.install agimus-sot.install
 
 ##### HPP Corba clients #######################################
 hpp-manipulation-corba.configure.dep: hpp-corbaserver.install
@@ -39,3 +39,7 @@ romeo.configure.dep:
 gerard-bauzil.configure.dep:
 
 hpp_tiago.configure.dep:
+
+##### For simulation ######################################
+
+rviz_camera_stream.configure.dep:

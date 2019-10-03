@@ -31,7 +31,7 @@ else
   include ${config.mk}
 endif
 
-all: agimus.install agimus-sot.install
+all: agimus.install agimus-sot.install hpp-gepetto-viewer.install
 
 bootstrap:
 	@if [ -d "agimus" ]; then \
@@ -57,6 +57,9 @@ agimus-vision_repository=${AGIMUS_REPO}
 
 agimus-demos_branch=master
 agimus-demos_repository=${AGIMUS_REPO}
+
+agimus-doc_branch=master
+agimus-doc_repository=${AGIMUS_REPO}
 
 hpp-corbaserver_branch=devel
 hpp-corbaserver_repository=${HPP_REPO}
@@ -125,6 +128,9 @@ romeo_repository=${HPP_REPO}
 
 hpp_tiago_branch=master
 hpp_tiago_repository=${HPP_REPO}
+
+rviz_camera_stream_branch=master
+rviz_camera_stream_repository=${AGIMUS_REPO}
 
 ifeq (${INSTALL_SOT_FROM_SOURCE}, TRUE)
 	include ${sot_repos.mk}
