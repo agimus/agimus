@@ -132,6 +132,9 @@ hpp_tiago_repository=${HPP_REPO}
 rviz_camera_stream_branch=master
 rviz_camera_stream_repository=${AGIMUS_REPO}
 
+roslaunch_to_dot_branch=master
+roslaunch_to_dot_repository=https://github.com/bponsler
+
 ifeq (${INSTALL_SOT_FROM_SOURCE}, TRUE)
 	include ${sot_repos.mk}
 endif

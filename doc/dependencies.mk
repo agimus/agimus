@@ -43,3 +43,7 @@ hpp_tiago.configure.dep:
 ##### For simulation ######################################
 
 rviz_camera_stream.configure.dep:
+
+##### For documentation ###################################
+
+roslaunch_to_dot.configure.dep:
