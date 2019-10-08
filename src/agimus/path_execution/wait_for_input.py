@@ -29,14 +29,14 @@
 
 ## This class handles user input.
 #
-# _\li wait for user input
-# _\li obtain the waypoints of path from HPP
-# _\li duplicated first waypoint. This ensures that SoT will start the motion
-# _    from the right configuration.
-# _\li get the transition for each sub-path and remove *fake transitions*.
+# \li wait for user input
+# \li obtain the waypoints of path from HPP
+# \li duplicated first waypoint. This ensures that SoT will start the motion
+#     from the right configuration.
+# \li get the transition for each sub-path and remove *fake transitions*.
 #     See comment in the code.
 #     \todo I think this should be done in HPP.
-# _\li initalize the topics. \n
+# \li initalize the topics. \n
 #     (call services `hpp/target/reset_topics` and `agimus/sot/request_hpp_topics`)
 
 import rospy

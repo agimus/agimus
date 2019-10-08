@@ -48,7 +48,7 @@ class ErrorEvent(Exception):
         return repr(self.value)
 
 
-##_Execute a sub-path
+## Execute a sub-path
 #
 # There are three main steps in execution of a sub-path
 # \li pre-action tasks
@@ -56,11 +56,11 @@ class ErrorEvent(Exception):
 # \li post-action tasks, typically closing the gripper
 #
 # Between each step, the execution is paused until a message on topic
-# _`/agimus/sot/event/done`.
-# _\todo fix scheduling, the current code waits a bit before considering
+# `/agimus/sot/event/done`.
+# \todo fix scheduling, the current code waits a bit before considering
 #       control_norm_changed and step_by_step messages.
 #
-# _\todo error handling, like object not in gripper when closing it.
+# \todo error handling, like object not in gripper when closing it.
 class PlayPath(smach.State):
     hppTargetPubDict = {"publish": [Empty, 1]}
     subscribersDict = {
@@ -212,10 +212,10 @@ class PlayPath(smach.State):
 
             # self.control_norm_ok = False
             rospy.loginfo("Read queue (size {})".format(queueSize))
-            # _SoT should wait to have a queue larger than 1. This ensures that read_queue won't run into
-            # _an infinite loop for a very short path (i.e. one configuration only).
-            # _SoT should not wait to have a queue larger than 100
-            # _Delay is 1 if the queue is large enough or 10 if it is small.
+            # SoT should wait to have a queue larger than 1. This ensures that read_queue won't run into
+            # an infinite loop for a very short path (i.e. one configuration only).
+            # SoT should not wait to have a queue larger than 100
+            # Delay is 1 if the queue is large enough or 10 if it is small.
             # TODO Make maximum queue size and delay parameterizable.
             queueSize = min(max(queueSize, 1), 100)
             delay = 1 if queueSize > 10 else 10

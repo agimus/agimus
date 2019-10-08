@@ -38,9 +38,9 @@ from outcome import _outcomes
 ## Waits if the step by step level is lower than level
 #
 # The step by step level is stored in ROS param `step_by_step`.
-# _\param msg human readable message.
-# _\param level 0 means *always wait*.
-# _\param time to wait **after** the message is received.
+# \param msg human readable message.
+# \param level 0 means *always wait*.
+# \param time to wait **after** the message is received.
 #
 # \todo It should be possible to handle errors while waiting for user input.
 def wait_if_step_by_step(msg, level, time=0.1):
