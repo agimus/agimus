@@ -24,7 +24,6 @@ INCLUDE(cmake/python.cmake)
 SET(PROJECT_NAME agimus)
 SET(PROJECT_DESCRIPTION "Software framework for manipulation planning and execution.")
 SET(PROJECT_URL "")
-SET(PROJECT_VERSION "")
 
 SETUP_PROJECT()
 FINDPYTHON(2.7 REQUIRED EXACT)
