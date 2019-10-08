@@ -6,7 +6,10 @@ FOREACH(F ${PYTHON_FILE})
 ENDFOREACH()
 
 SET (PYTHON_FILE
+    initialize_path.py
+    outcome.py
     play_path.py
+    wait_for_input.py
     __init__.py)
 
 FOREACH(F ${PYTHON_FILE})
