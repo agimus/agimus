@@ -57,9 +57,10 @@ def wait_if_step_by_step(msg, level, time=0.1):
 
 
 
-##_Initialize the trajectory publisher.
+## State of \c smach finite-state machine
 #
-# See agimus_hpp.trajectory_publisher.HppOutputQueue
+#  See method \link agimus.path_execution.initialize_path.InitializePath.execute
+#  execute \endlink for details.
 class InitializePath(smach.State):
     hppTargetPubDict = {"read_subpath": [ReadSubPath, 1]}
     serviceProxiesDict = {
@@ -87,6 +88,22 @@ class InitializePath(smach.State):
             "", InitializePath.serviceProxiesDict
         )
         self.hppclient = HppClient(context="corbaserver")
+
+    ## Initialize the trajectory publisher.
+    #
+    # If last section of the path has been executed, returns "succeeded",
+    # otherwise,
+    # \li stores values corresponding to the current path segment in
+    # \code
+    # userdata.transitionId
+    # userdata.endStateId
+    # userdata.duration
+    # \endcode
+    # \li publish path id start time and duration of current segment in
+    #     topic "/hpp/target/read_subpath".
+    # and returns "preempted".
+    #
+    # \sa agimus_hpp.trajectory_publisher.HppOutputQueue
 
     def execute(self, userdata):
         userdata.currentSection += 1
