@@ -94,7 +94,7 @@ class WaitForInput(smach.State):
     #  \li a client to \c hppcorbaserver retrieves the waypoints and times of
     #      the path to be executed, times are stored in
     #      \code userdata.times\endcode.
-    #  \li a list of pairs \c[ transitionName, \c graphName] is built
+    #  \li a list of pairs [\c transitionName, \c graphName] is built
     #      and stored in \code userdata.transitionIds\endcode.
     #  \li consecutive identical transitions are replaced by one single
     #      transition,

@@ -50,7 +50,7 @@ class ErrorEvent(Exception):
 
 ## State of \c smach finite-state machine
 #
-#  See method \link agimus.path_execution._play_path.PlayPath.execute
+#  See method \link agimus.path_execution.play_path.PlayPath.execute
 #  execute \endlink for details.
 class PlayPath(smach.State):
     hppTargetPubDict = {"publish": [Empty, 1]}
