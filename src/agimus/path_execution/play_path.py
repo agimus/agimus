@@ -48,19 +48,10 @@ class ErrorEvent(Exception):
         return repr(self.value)
 
 
-## Execute a sub-path
+## State of \c smach finite-state machine
 #
-# There are three main steps in execution of a sub-path
-# \li pre-action tasks
-# \li execution of the path
-# \li post-action tasks, typically closing the gripper
-#
-# Between each step, the execution is paused until a message on topic
-# `/agimus/sot/event/done`.
-# \todo fix scheduling, the current code waits a bit before considering
-#       control_norm_changed and step_by_step messages.
-#
-# \todo error handling, like object not in gripper when closing it.
+#  See method \link agimus.path_execution.play_path.PlayPath.execute
+#  execute \endlink for details.
 class PlayPath(smach.State):
     hppTargetPubDict = {"publish": [Empty, 1]}
     subscribersDict = {
@@ -151,6 +142,19 @@ class PlayPath(smach.State):
         self.event_done_count -= 1
         self.event_done = False
 
+    ## Execute a sub-path
+    #
+    # There are three main steps in execution of a sub-path
+    # \li pre-action tasks
+    # \li execution of the path, publish in topic "/hpp/target/publish"
+    # \li post-action tasks, typically closing the gripper
+    #
+    # Between each step, the execution is paused until a message on topic
+    # `/agimus/sot/event/done`.
+    # \todo fix scheduling, the current code waits a bit before considering
+    #       control_norm_changed and step_by_step messages.
+    #
+    # \todo error handling, like object not in gripper when closing it.
     def execute(self, userdata):
         rate = rospy.Rate(1000)
 
@@ -164,7 +168,7 @@ class PlayPath(smach.State):
                     raise ErrorEvent(
                         "Could not initialize the queues in SoT: " + rsp.message
                     )
-                # TODO make sure the message have been received
+                # TODO make sure the message has been received
                 # It *should* be fine to do it with read_queue as the current
                 # sot *should* be "keep_posture"
                 self.serviceProxies["agimus"]["sot"]["clear_queues"]()
@@ -172,7 +176,7 @@ class PlayPath(smach.State):
                 first_published = True
                 rospy.loginfo("Queues initialized.")
 
-            # TODO Check that there the current SOT and the future SOT are compatible ?
+            # TODO Check that the current SOT and the future SOT are compatible ?
             self.serviceProxies["agimus"]["sot"]["clear_queues"]()
             status = self.serviceProxies["agimus"]["sot"]["run_pre_action"](
                 userdata.transitionId[0], userdata.transitionId[1]

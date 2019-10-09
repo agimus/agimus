@@ -47,6 +47,10 @@ from agimus_hpp.client import HppClient
 from agimus_sot_msgs.srv import PlugSot, SetPose
 from std_msgs.msg import UInt32
 
+## State of \c smach finite-state machine
+#
+#  See method \link agimus.path_execution.wait_for_input.WaitForInput.execute
+#  execute \endlink for details.
 class WaitForInput(smach.State):
     # _Accessed services
     serviceProxiesDict = {
@@ -84,6 +88,18 @@ class WaitForInput(smach.State):
     def getStatus(self, empty):
         return self.ready, self.status
 
+    ## Wait for message "start_path"
+    #
+    #  Message "start_path" contains the path id to be executed. Once received,
+    #  \li a client to \c hppcorbaserver retrieves the waypoints and times of
+    #      the path to be executed, times are stored in
+    #      \code userdata.times\endcode.
+    #  \li a list of pairs [\c transitionName, \c graphName] is built
+    #      and stored in \code userdata.transitionIds\endcode.
+    #  \li consecutive identical transitions are replaced by one single
+    #      transition,
+    #  \li a list of final states of the transitions is built and stored in
+    #      \code userdata.endStateIds\endcode.
     def execute(self, userdata):
         self.status = "waiting"
         self.ready = True

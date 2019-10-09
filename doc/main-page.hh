@@ -1,13 +1,13 @@
 /** \mainpage
 
-  Supervision of data transmission between HPP and SoT.
-  It implements a finite state machine using Smach. There are three states:
-  \li agimus.path_execution.play_path.WaitForInput
-  \li agimus.path_execution.play_path.InitializePath (Init)
-  \li agimus.path_execution.play_path.PlayPath (Play)
+  Supervision of data transmission between HPP and SoT.  It implements
+  a finite state machine using <a href="https://wiki.ros.org/smach">Smach</a>. The three states are:
+
+  \li \link agimus.path_execution.wait_for_input.WaitForInput
+  WaitForInput \endlink
+  \li \link agimus.path_execution.initialize_path.InitializePath Init \endlink
+  \li \link agimus.path_execution.play_path.PlayPath Play \endlink
 
   \image html figures/smach-viewer-inkscape.svg "Finite state machine."
-
-  \todo Split file \c src/agimus/path_execution/play_path.py into 3 files with one class per file.
 
 */
