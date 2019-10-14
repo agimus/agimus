@@ -25,6 +25,7 @@ define _warning
 endef
 _msg_done=$(shell echo "\033[0;32mdone\033[0m")
 _msg_warn=$(shell echo "\033[0;33mwarning\033[0m")
+_msg_fail=$(shell echo "\033[0;31mfailed\033[0m")
 
 ##### static variables ########
 

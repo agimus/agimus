@@ -96,7 +96,8 @@ update:
 	$(eval curdir := $(subst ___,/,$(@:.run_make=)))
 	@${MAKE} -C ${SRC_DIR}/$(curdir)/${BUILD_FOLDER} install \
 		1> ${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/install.stdout.make.log \
-		2> ${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/install.stderr.make.log
+		2> ${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/install.stderr.make.log || \
+		(echo "${_msg_fail}.\n\nSee logs in ${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/install.*.make.log\n---------------------------------\n" && exit 1);
 	@if [ -s "${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/install.stderr.make.log" ]; then \
 		echo "${_msg_warn}."; \
 		echo "See logs in ${SRC_DIR}/$(curdir)/${BUILD_FOLDER}/install.*.make.log"; \
