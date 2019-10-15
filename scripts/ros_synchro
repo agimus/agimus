@@ -1,0 +1,51 @@
+#!/usr/bin/python2.7
+from __future__ import print_function
+import rospy, sys, argparse
+
+def parseServiceArg(s):
+    if "," not in s:
+        return (str(s), None)
+    ss = s.rsplit(',',1)
+    return (str(ss[0]), float(ss[1]))
+
+def parseTfLookup(s):
+    if s.count(",") != 1:
+        raise ValueError ("Tf lookup request must be of form frame_from,frame_fo")
+    return s.split(',',1)
+
+parser = argparse.ArgumentParser(description='ROS synchronisation feature')
+parser.add_argument('--services', default=[], nargs='+', type=parseServiceArg, help='a service name, eventually followed by a timeout (in seconds) using a comma as separator.')
+parser.add_argument('--tf-lookups', default=[], nargs='+', type=parseTfLookup, help='a list of tf lookup requests.')
+parser.add_argument('command', nargs='+')
+
+args = parser.parse_args()
+
+rospy.init_node('ros_synchro',anonymous=True)
+if len(args.services) > 0:
+    for service, timeout in args.services:
+        rospy.loginfo('Waiting for service {} (timeout={})'.format(service, timeout))
+        rospy.wait_for_service (service, timeout)
+        if rospy.is_shutdown(): break
+
+if not rospy.is_shutdown() and len(args.tf_lookups) > 0:
+    import tf
+    listener = tf.TransformListener()
+    rate = rospy.Rate(10.0)
+    for tf_from, tf_to in args.tf_lookups:
+        rospy.loginfo('Waiting for transform between {} and {}'.format(tf_from, tf_to))
+        found = False
+        while not found:
+            if rospy.is_shutdown(): break
+            try:
+                listener.lookupTransform (tf_to, tf_from, rospy.Time(0))
+                found = True
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                continue
+            rate.sleep()
+
+if rospy.is_shutdown(): sys.exit(1)
+rospy.signal_shutdown('finished waiting')
+
+# Launch the nodes.
+import subprocess
+subprocess.call (args.command)

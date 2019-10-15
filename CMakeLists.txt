@@ -50,6 +50,7 @@ INSTALL(FILES plugin.xml
 INSTALL(PROGRAMS
   scripts/path_execution_fsm.py
   scripts/rqt_path_execution
+  scripts/ros_synchro
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts)
 INSTALL(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
