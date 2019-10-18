@@ -1,0 +1,28 @@
+#!/usr/bin/python2.7
+from __future__ import print_function
+import rospy, time, argparse
+
+from rosgraph_msgs.msg import Clock
+
+parser = argparse.ArgumentParser(description='Publishes to /clock a time that is increased by the duration specified by the arguments')
+parser.add_argument('--every', default=0.001, nargs='?', type=float, help='interval between two publications.')
+parser.add_argument('--sec', default=0, nargs='?', type=int, help='an integer specifying the number of seconds.')
+parser.add_argument('--nsec', default=500000, nargs='?', type=int, help='an integer specifying the number of nanoseconds..')
+
+args = parser.parse_args(rospy.myargv()[1:])
+
+rospy.init_node ("time_simulation")
+pub = rospy.Publisher ("/clock", Clock, queue_size=2, latch=True)
+
+clock = Clock(rospy.Time.now())
+increment = rospy.Duration (args.sec, args.nsec)
+incSec = args.every
+start = time.time()
+while not rospy.is_shutdown():
+    pub.publish (clock)
+    clock.clock += increment
+
+    start += incSec
+    current = time.time()
+    if current < start:
+        time.sleep(start - current)
