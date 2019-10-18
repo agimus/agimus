@@ -33,6 +33,7 @@ import std_srvs.srv
 from agimus_hpp import ros_tools
 from agimus_hpp.client import HppClient
 from agimus_sot_msgs.msg import ReadSubPath
+from agimus_sot_msgs.srv import PlugSot
 
 ## Waits if the step by step level is lower than level
 #
@@ -63,7 +64,12 @@ def wait_if_step_by_step(msg, level, time=0.1):
 class InitializePath(smach.State):
     hppTargetPubDict = {"read_subpath": [ReadSubPath, 1]}
     serviceProxiesDict = {
-        "agimus": {"sot": {"clear_queues": [std_srvs.srv.Trigger]}},
+        "agimus": {
+            "sot": {
+                "clear_queues": [std_srvs.srv.Trigger],
+                "plug_sot": [PlugSot],
+            }
+        },
         "hpp": {"target": {"publish_first": [std_srvs.srv.Trigger]}},
     }
 
@@ -107,6 +113,9 @@ class InitializePath(smach.State):
     def execute(self, userdata):
         userdata.currentSection += 1
         if userdata.currentSection + 1 >= len(userdata.times):
+            status = self.serviceProxies["agimus"]["sot"]["plug_sot"]("", "")
+            if not status.success:
+                rospy.logerr ("Could not change controller to 'keep_posture': " + status.msg)
             return "finished"
         start = userdata.times[userdata.currentSection]
         length = userdata.times[userdata.currentSection + 1] - start

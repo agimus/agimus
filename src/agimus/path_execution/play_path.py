@@ -33,7 +33,7 @@ import smach_ros
 import std_srvs.srv
 from agimus_hpp import ros_tools
 from agimus_hpp.client import HppClient
-from agimus_sot_msgs.srv import GetInt, PlugSot, ReadQueue
+from agimus_sot_msgs.srv import GetInt, PlugSot, ReadQueue, WaitForMinQueueSize
 from std_msgs.msg import Empty, Int32, String, UInt32
 from initialize_path import InitializePath, wait_if_step_by_step
 from wait_for_input import WaitForInput
@@ -71,6 +71,7 @@ class PlayPath(smach.State):
                 "plug_sot": [PlugSot],
                 "run_post_action": [PlugSot],
                 "clear_queues": [std_srvs.srv.Trigger],
+                "wait_for_min_queue_size": [WaitForMinQueueSize],
                 "read_queue": [ReadQueue],
                 "stop_reading_queue": [std_srvs.srv.Empty],
             }
@@ -166,9 +167,11 @@ class PlayPath(smach.State):
                     raise ErrorEvent(
                         "Could not initialize the queues in SoT: " + rsp.message
                     )
-                # TODO make sure the message has been received
-                # It *should* be fine to do it with read_queue as the current
-                # sot *should* be "keep_posture"
+                rsp = self.serviceProxies["agimus"]["sot"]["wait_for_min_queue_size"](1, 1.)
+                if not rsp.success:
+                    raise ErrorEvent(
+                        "Did not receive the first message for initialization: " + rsp.message
+                    )
                 self.serviceProxies["agimus"]["sot"]["clear_queues"]()
                 userdata.queue_initialized = True
                 first_published = True
@@ -186,16 +189,20 @@ class PlayPath(smach.State):
                     if not rsp.success:
                         raise ErrorEvent(rsp.message)
                     self.event_done = False
-                    self.serviceProxies["agimus"]["sot"]["read_queue"](
-                        delay=1, minQueueSize=1, duration=0
+                    rsp = self.serviceProxies["agimus"]["sot"]["read_queue"](
+                        delay=1, minQueueSize=1, duration=0, timeout=1.
                     )
                     first_published = True
                 else:
                     self.event_done = False
-                    self.serviceProxies["agimus"]["sot"]["read_queue"](
-                        delay=1, minQueueSize=0, duration=0
+                    rsp = self.serviceProxies["agimus"]["sot"]["read_queue"](
+                        delay=1, minQueueSize=0, duration=0, timeout=1.
                     )
 
+                if not rsp.success:
+                    raise ErrorEvent(
+                        "Could not read queues for pre-action: " + rsp.message
+                    )
                 self._wait_for_event_done(rate, "pre-actions")
                 wait_if_step_by_step("Pre-action ended.", 2)
 
@@ -219,12 +226,16 @@ class PlayPath(smach.State):
             # SoT should not wait to have a queue larger than 100
             # Delay is 1 if the queue is large enough or 10 if it is small.
             # TODO Make maximum queue size and delay parameterizable.
-            queueSize = min(max(queueSize, 1), 100)
+            queueSize = min(queueSize, 100)
             delay = 1 if queueSize > 10 else 10
             self.event_done = False
-            self.serviceProxies["agimus"]["sot"]["read_queue"](
-                delay=delay, minQueueSize=queueSize, duration=userdata.duration
+            rsp = self.serviceProxies["agimus"]["sot"]["read_queue"](
+                delay=delay, minQueueSize=queueSize, duration=userdata.duration, timeout = 1.
             )
+            if not rsp.success:
+                raise ErrorEvent(
+                    "Could not read queues for action: " + rsp.message
+                )
 
             if self.interruption is not None:
                 rospy.logerr(str(self.interruption))
