@@ -44,7 +44,7 @@ import smach
 import std_srvs.srv
 from agimus_hpp import ros_tools
 from agimus_hpp.client import HppClient
-from agimus_sot_msgs.srv import PlugSot, SetPose
+from agimus_sot_msgs.srv import SetPose
 from std_msgs.msg import UInt32
 
 ## State of \c smach finite-state machine
@@ -57,7 +57,6 @@ class WaitForInput(smach.State):
         "agimus": {
             "sot": {
                 "request_hpp_topics": [std_srvs.srv.Trigger],
-                "plug_sot": [PlugSot],
                 "set_base_pose": [SetPose],
             }
         },
@@ -66,7 +65,7 @@ class WaitForInput(smach.State):
 
     def __init__(self):
         super(WaitForInput, self).__init__(
-            outcomes=["succeeded", "aborted"],
+            outcomes=["start_path", "interrupted", "failed_to_start"],
             input_keys=[],
             output_keys=[
                 "pathId",
@@ -103,7 +102,10 @@ class WaitForInput(smach.State):
     def execute(self, userdata):
         self.status = "waiting"
         self.ready = True
-        res = rospy.wait_for_message("start_path", UInt32)
+        try:
+            res = rospy.wait_for_message("start_path", UInt32)
+        except rospy.ROSInterruptException as e:
+            return "interrupted"
         self.ready = False
         pid = res.data
         self.status = "playing path " + str(pid)
@@ -163,7 +165,9 @@ class WaitForInput(smach.State):
             rospy.sleep(0.001)
             # TODO check that qs[0] and the current robot configuration are
             # close
+        except rospy.ROSInterruptException as e:
+            return "interrupted"
         except Exception as e:
             rospy.logerr("Failed " + str(e))
-            return "aborted"
-        return "succeeded"
+            return "failed_to_start"
+        return "start_path"

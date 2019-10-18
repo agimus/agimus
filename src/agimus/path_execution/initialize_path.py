@@ -33,7 +33,6 @@ import std_srvs.srv
 from agimus_hpp import ros_tools
 from agimus_hpp.client import HppClient
 from agimus_sot_msgs.msg import ReadSubPath
-from outcome import _outcomes
 
 ## Waits if the step by step level is lower than level
 #
@@ -70,7 +69,7 @@ class InitializePath(smach.State):
 
     def __init__(self):
         super(InitializePath, self).__init__(
-            outcomes=_outcomes,
+            outcomes=["finished", "next"],
             input_keys=[
                 "pathId",
                 "times",
@@ -108,7 +107,7 @@ class InitializePath(smach.State):
     def execute(self, userdata):
         userdata.currentSection += 1
         if userdata.currentSection + 1 >= len(userdata.times):
-            return _outcomes[0]
+            return "finished"
         start = userdata.times[userdata.currentSection]
         length = userdata.times[userdata.currentSection + 1] - start
 
@@ -125,6 +124,6 @@ class InitializePath(smach.State):
             ReadSubPath(userdata.pathId, start, length)
         )
         rospy.loginfo("Start reading subpath.")
-        return _outcomes[2]
+        return "next"
 
 

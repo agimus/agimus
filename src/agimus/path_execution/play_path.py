@@ -37,8 +37,6 @@ from agimus_sot_msgs.srv import GetInt, PlugSot, ReadQueue
 from std_msgs.msg import Empty, Int32, String, UInt32
 from initialize_path import InitializePath, wait_if_step_by_step
 from wait_for_input import WaitForInput
-from outcome import _outcomes
-
 
 class ErrorEvent(Exception):
     def __init__(self, value):
@@ -87,7 +85,7 @@ class PlayPath(smach.State):
 
     def __init__(self):
         super(PlayPath, self).__init__(
-            outcomes=_outcomes,
+            outcomes=["succeeded", "aborted", "preempted"],
             input_keys=["transitionId", "endStateId", "duration", "queue_initialized"],
             output_keys=["queue_initialized"],
         )
@@ -212,7 +210,7 @@ class PlayPath(smach.State):
             )
             if not status.success:
                 rospy.logerr(status.msg)
-                return _outcomes[1]
+                return "preempted"
 
             # self.control_norm_ok = False
             rospy.loginfo("Read queue (size {})".format(queueSize))
@@ -231,7 +229,7 @@ class PlayPath(smach.State):
             if self.interruption is not None:
                 rospy.logerr(str(self.interruption))
                 self.interruption = None
-                return _outcomes[2]
+                return "aborted"
 
             self._wait_for_event_done(rate, "main action")
             while not self.path_published:
@@ -252,11 +250,11 @@ class PlayPath(smach.State):
                 self._wait_for_event_done(rate, "post-action")
                 wait_if_step_by_step("Post-action ended.", 2)
 
-            return _outcomes[0]
+            return "succeeded"
         except ErrorEvent as e:
             # TODO interrupt path publication.
             rospy.logerr(str(e))
-            return _outcomes[1]
+            return "preempted"
 
 
 def makeStateMachine():
@@ -264,13 +262,16 @@ def makeStateMachine():
     if not rospy.has_param("step_by_step"):
         rospy.set_param("step_by_step", 0)
 
-    sm = smach.StateMachine(outcomes=_outcomes)
+    sm = smach.StateMachine(outcomes=["aborted",])
 
     with sm:
         smach.StateMachine.add(
             "WaitForInput",
             WaitForInput(),
-            transitions={"succeeded": "Init", "aborted": "WaitForInput"},
+            transitions={
+                "start_path": "Init",
+                "failed_to_start": "WaitForInput",
+                "interrupted": "aborted"},
             remapping={
                 "pathId": "pathId",
                 "times": "times",
@@ -284,9 +285,8 @@ def makeStateMachine():
             "Init",
             InitializePath(),
             transitions={
-                "succeeded": "WaitForInput",
-                "aborted": "aborted",
-                "preempted": "Play",
+                "finished": "WaitForInput",
+                "next": "Play",
             },
             remapping={
                 "pathId": "pathId",
