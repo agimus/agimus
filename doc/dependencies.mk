@@ -43,6 +43,7 @@ hpp_tiago.configure.dep:
 ##### For simulation ######################################
 
 rviz_camera_stream.configure.dep:
+rviz_lighting.configure.dep:
 
 ##### For documentation ###################################
 
