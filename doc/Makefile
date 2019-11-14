@@ -31,7 +31,7 @@ else
   include ${config.mk}
 endif
 
-all: agimus.install agimus-sot.install hpp-gepetto-viewer.install
+all: agimus.install agimus-sot.install hpp-gepetto-viewer.install rviz_camera_stream.install rviz_lighting.install
 
 bootstrap:
 	@if [ -d "agimus" ]; then \
