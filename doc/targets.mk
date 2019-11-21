@@ -17,6 +17,13 @@ log:
 		${MAKE} "$$child_dir".log; \
 	done
 
+fetch:
+	@for child_dir in $$(ls ${SRC_DIR}); do \
+		test -d "$$child_dir" || continue; \
+		test -d "$$child_dir/.git" || continue; \
+		${MAKE} "$$child_dir".fetch; \
+	done
+
 update:
 	@for child_dir in $$(ls ${SRC_DIR}); do \
 		test -d "$$child_dir" || continue; \
@@ -32,6 +39,14 @@ update:
 		git clone ${GIT_QUIET} -b ${$(@:.checkout=)_branch} ${$(@:.checkout=)_repository}/$(@:.checkout=); \
 		cd ${SRC_DIR}/$(@:.checkout=) && git submodule ${GIT_QUIET} update --init; \
 	  echo "${_msg_done}."; \
+	fi
+
+%.fetch:
+	if [ "${$(@:.fetch=)_repository}" = "" ]; then \
+		echo "$(@:.fetch=) is not referenced"; \
+	else \
+		cd ${SRC_DIR}/$(@:.fetch=);\
+		git fetch ${GIT_QUIET} origin; \
 	fi
 
 %.update:
