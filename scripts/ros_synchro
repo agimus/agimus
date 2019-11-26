@@ -28,8 +28,9 @@ if len(args.services) > 0:
         if rospy.is_shutdown(): break
 
 if not rospy.is_shutdown() and len(args.tf_lookups) > 0:
-    import tf
-    listener = tf.TransformListener()
+    import tf2_ros
+    buffer = tf2_ros.Buffer()
+    listener = tf2_ros.TransformListener(buffer)
     rate = rospy.Rate(10.0)
     for tf_from, tf_to in args.tf_lookups:
         rospy.loginfo('Waiting for transform between {} and {}'.format(tf_from, tf_to))
@@ -37,11 +38,13 @@ if not rospy.is_shutdown() and len(args.tf_lookups) > 0:
         while not found:
             if rospy.is_shutdown(): break
             try:
-                listener.lookupTransform (tf_to, tf_from, rospy.Time(0))
+                buffer.lookup_transform (tf_to, tf_from, rospy.Time(0))
                 found = True
-            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 continue
             rate.sleep()
+    del listener
+    del buffer
 
 if rospy.is_shutdown(): sys.exit(1)
 rospy.signal_shutdown('finished waiting')
