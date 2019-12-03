@@ -127,6 +127,11 @@ class PathExecution(Plugin):
         self._layout.addWidget(geom_simu_paused, row, 2)
         row += 1
 
+        reset_tag_poses = QPushButton("Reset tag poses.")
+        reset_tag_poses.clicked.connect(self.reset_tag_poses)
+        self._layout.addWidget(reset_tag_poses, row, 2)
+        row += 1
+
         space = QWidget()
         space.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self._layout.addWidget(space, row, 1, 1, 2)
@@ -171,6 +176,14 @@ class PathExecution(Plugin):
         # TODO restore intrinsic configuration, usually using:
         # v = instance_settings.value(k)
         pass
+
+    def reset_tag_poses(self):
+        try:
+            from std_srvs.srv import Trigger
+            reset = rospy.ServiceProxy ("/vision/reset_tag_poses", Trigger)
+            reset()
+        except rospy.ServiceException:
+            pass
 
     # def trigger_configuration(self):
     # Comment in to signal that the plugin has a way to configure
