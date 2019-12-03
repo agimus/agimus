@@ -100,8 +100,9 @@ class PlayPath(smach.State):
         )
 
         self.path_published = False
-        self.event_done = False
+        self.event_done = None
         self.event_error = None
+        self.event_done_min_time = 0
         self.interruption = None
         self.event_done_count = 0
 
@@ -109,9 +110,11 @@ class PlayPath(smach.State):
         self.event_error = msg.data
 
     def _handleEventDone(self, msg):
+        if msg.data < self.event_done_min_time and msg.data != 0:
+            rospy.loginfo("Filtered out event_done " + str(msg.data))
+            return
         self.event_done_count += 1
-        # self.event_done = msg.data
-        self.event_done = True
+        self.event_done = msg.data
         rospy.loginfo(
             "Received event_done "
             + str(msg.data)
@@ -130,16 +133,17 @@ class PlayPath(smach.State):
         rospy.loginfo("Publishing path done.")
 
     def _wait_for_event_done(self, rate, msg):
-        rospy.loginfo("Wait for event on /agimus/sot/event/done")
-        while not self.event_done:
-            if self.event_error:
-                self.event_done = False
+        rospy.loginfo("Wait for event on /agimus/sot/event/done after {} (current: {})"
+                .format(self.event_done_min_time, self.event_done))
+        while self.event_done is None or (
+                self.event_done < self.event_done_min_time and self.event_done != 0):
+            if self.event_error is not None:
+                self.event_done = None
                 raise ErrorEvent("ErrorEvent during {}: {}".format(msg, self.event_error))
             if rospy.is_shutdown():
                 raise ErrorEvent("Requested rospy shutdown")
             rate.sleep()
-        self.event_done_count -= 1
-        self.event_done = False
+        self.event_done = None
 
     ## Execute a sub-path
     #
@@ -188,16 +192,16 @@ class PlayPath(smach.State):
                     rsp = self.serviceProxies["hpp"]["target"]["publish_first"]()
                     if not rsp.success:
                         raise ErrorEvent(rsp.message)
-                    self.event_done = False
                     rsp = self.serviceProxies["agimus"]["sot"]["read_queue"](
                         delay=1, minQueueSize=1, duration=0, timeout=1.
                     )
+                    self.event_done_min_time = rsp.start_time
                     first_published = True
                 else:
-                    self.event_done = False
                     rsp = self.serviceProxies["agimus"]["sot"]["read_queue"](
                         delay=1, minQueueSize=0, duration=0, timeout=1.
                     )
+                    self.event_done_min_time = rsp.start_time
 
                 if not rsp.success:
                     raise ErrorEvent(
@@ -228,7 +232,6 @@ class PlayPath(smach.State):
             # TODO Make maximum queue size and delay parameterizable.
             queueSize = min(queueSize, 100)
             delay = 1 if queueSize > 10 else 10
-            self.event_done = False
             rsp = self.serviceProxies["agimus"]["sot"]["read_queue"](
                 delay=delay, minQueueSize=queueSize, duration=userdata.duration, timeout = 1.
             )
@@ -236,6 +239,7 @@ class PlayPath(smach.State):
                 raise ErrorEvent(
                     "Could not read queues for action: " + rsp.message
                 )
+            self.event_done_min_time = rsp.start_time
 
             if self.interruption is not None:
                 rospy.logerr(str(self.interruption))
@@ -252,12 +256,12 @@ class PlayPath(smach.State):
 
             # Run post action if any
             rospy.loginfo("Start post-action")
-            self.event_done = False
             status = self.serviceProxies["agimus"]["sot"]["run_post_action"](
                 userdata.endStateId[0], userdata.endStateId[1]
             )
 
             if status.success:
+                self.event_done_min_time = rsp.start_time
                 self._wait_for_event_done(rate, "post-action")
                 wait_if_step_by_step("Post-action ended.", 2)
 
