@@ -1,7 +1,7 @@
 eigenpy_branch=master
 eigenpy_repository=${SOT_REPO}
 
-pinocchio_branch=v2.1.3
+pinocchio_branch=v2.2.11
 pinocchio_repository=${SOT_REPO}
 pinocchio_extra_flags=-DBUILD_UNIT_TESTS=OFF
 
