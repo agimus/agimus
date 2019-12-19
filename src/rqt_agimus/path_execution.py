@@ -25,6 +25,7 @@ class PathExecution(Plugin):
     StatusDescriptionTopic = "/agimus/status/description"
     StatusWaitStepByStepTopic = "/agimus/status/is_waiting_for_step_by_step"
     StatusRunningTopic = "/agimus/status/running"
+    StatusWaitEventDoneTopic = "/agimus/status/is_waiting_for_event_done"
 
     def __init__(self, context):
         super(PathExecution, self).__init__(context)
@@ -51,11 +52,13 @@ class PathExecution(Plugin):
         )
         self.subs = {
                 "status/description": rospy.Subscriber (PathExecution.StatusDescriptionTopic,
-                    String, self.set_status_description),
+                    String, lambda msg: self._status_desc.setText(msg.data)),
                 "status/is_waiting_for_step_by_step": rospy.Subscriber (PathExecution.StatusWaitStepByStepTopic,
-                    Bool, self.set_is_waiting_for_step_by_step),
+                    Bool, lambda msg: self._one_step_button.setEnabled(msg.data)),
+                "status/is_waiting_for_event_done": rospy.Subscriber (PathExecution.StatusWaitEventDoneTopic,
+                    Bool, lambda msg: self._send_event_done.setEnabled(msg.data)),
                 "status/running": rospy.Subscriber (PathExecution.StatusRunningTopic,
-                    Bool, self.set_running),
+                    Bool, lambda msg: self._execute_path.setEnabled(not msg.data)),
                 }
 
         # Create QWidget
@@ -141,9 +144,10 @@ class PathExecution(Plugin):
         self._layout.addWidget(publish_state, row, 2)
         row += 1
 
-        send_event_done = QPushButton("Trigger event done.")
-        send_event_done.clicked.connect(lambda x: self.event_done_publisher.publish(0))
-        self._layout.addWidget(send_event_done, row, 2)
+        self._send_event_done = QPushButton("Trigger event done.")
+        self._send_event_done.clicked.connect(lambda x: self.event_done_publisher.publish(0))
+        self._send_event_done.setEnabled(False)
+        self._layout.addWidget(self._send_event_done, row, 2)
         row += 1
 
         send_event_error = QPushButton("Trigger event error.")
@@ -218,15 +222,6 @@ class PathExecution(Plugin):
             reset()
         except rospy.ServiceException:
             pass
-
-    def set_status_description(self, msg):
-        self._status_desc.setText(msg.data)
-
-    def set_is_waiting_for_step_by_step(self, msg):
-        self._one_step_button.setEnabled(msg.data)
-
-    def set_running(self, msg):
-        self._execute_path.setEnabled(not msg.data)
 
     # def trigger_configuration(self):
     # Comment in to signal that the plugin has a way to configure

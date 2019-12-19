@@ -6,10 +6,12 @@ class Status(object):
         from std_msgs.msg import Bool, String
         ## A human readable string which tells what the FSM is doing.
         self._description = rospy.Publisher("/agimus/status/description", String, queue_size=1, latch=True)
-        ## A boolean which is True if the FSM is waiting for a message on step_by_step topic.
-        self._step_by_step = rospy.Publisher("/agimus/status/is_waiting_for_step_by_step", Bool, queue_size=1, latch=True)
         ## A boolean which is True if a path is being executed.
         self._running = rospy.Publisher("/agimus/status/running", Bool, queue_size=1, latch=True)
+        ## A boolean which is True if the FSM is waiting for a message on step_by_step topic.
+        self._step_by_step = rospy.Publisher("/agimus/status/is_waiting_for_step_by_step", Bool, queue_size=1, latch=True)
+        ## A boolean which is True if the FSM is waiting for the event \c done
+        self._event_done = rospy.Publisher("/agimus/status/is_waiting_for_event_done", Bool, queue_size=1, latch=True)
 
     def set_description(self, msg):
         self._description.publish (msg)
@@ -39,3 +41,6 @@ class Status(object):
 
     def set_running(self, msg):
         self._running.publish (msg)
+
+    def set_wait_for_event_done(self, msg):
+        self._event_done.publish (msg)

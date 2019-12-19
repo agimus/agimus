@@ -88,7 +88,8 @@ class PlayPath(smach.State):
     def __init__(self, status):
         super(PlayPath, self).__init__(
             outcomes=["succeeded", "aborted", "preempted"],
-            input_keys=["transitionId", "endStateId", "duration", "queue_initialized"],
+            input_keys=["transitionId", "endStateId", "duration",
+                "currentSection", "queue_initialized"],
             output_keys=["queue_initialized"],
         )
         self.status = status
@@ -135,19 +136,23 @@ class PlayPath(smach.State):
         rospy.loginfo("Publishing path done.")
 
     def _wait_for_event_done(self, rate, msg):
-        rospy.loginfo("Wait for event on /agimus/sot/event/done after {} (current: {})"
-                .format(self.event_done_min_time, self.event_done))
-        while self.event_done is None or (
-                self.event_done < self.event_done_min_time and self.event_done != 0):
-            if self.event_error is not None:
-                exception = ErrorEvent("ErrorEvent during {}: {}".format(msg, self.event_error))
-                self.event_done = None
-                self.event_error = None
-                raise exception
-            if rospy.is_shutdown():
-                raise ErrorEvent("Requested rospy shutdown")
-            rate.sleep()
-        self.event_done = None
+        try:
+            rospy.loginfo("Wait for event on /agimus/sot/event/done after {} (current: {})"
+                    .format(self.event_done_min_time, self.event_done))
+            self.status.set_wait_for_event_done(True)
+            while self.event_done is None or (
+                    self.event_done < self.event_done_min_time and self.event_done != 0):
+                if self.event_error is not None:
+                    exception = ErrorEvent("ErrorEvent during {}: {}".format(msg, self.event_error))
+                    self.event_done = None
+                    self.event_error = None
+                    raise exception
+                if rospy.is_shutdown():
+                    raise ErrorEvent("Requested rospy shutdown")
+                rate.sleep()
+            self.event_done = None
+        finally:
+            self.status.set_wait_for_event_done(False)
 
     ## Execute a sub-path
     #
@@ -192,7 +197,8 @@ class PlayPath(smach.State):
                 userdata.transitionId[0], userdata.transitionId[1]
             )
             if status.success:
-                self.status.set_description("Executing pre-action {}, subpath {}." .format(transition_identifier, "TODO"))
+                self.status.set_description("Executing pre-action {}, subpath {}."
+                        .format(transition_identifier, userdata.currentSection))
                 rospy.loginfo("Start pre-action")
                 if not first_published:
                     rsp = self.serviceProxies["hpp"]["target"]["publish_first"]()
@@ -222,7 +228,8 @@ class PlayPath(smach.State):
             queueSize = self.serviceProxies["hpp"]["target"]["get_queue_size"]().data
             self.targetPub["publish"].publish()
 
-            self.status.set_description("Executing action {}, subpath {}." .format(transition_identifier, "TODO"))
+            self.status.set_description("Executing action {}, subpath {}."
+                    .format(transition_identifier, userdata.currentSection))
             status = self.serviceProxies["agimus"]["sot"]["plug_sot"](
                 userdata.transitionId[0], userdata.transitionId[1]
             )
@@ -268,7 +275,8 @@ class PlayPath(smach.State):
             )
 
             if status.success:
-                self.status.set_description("Executing post-action {}, subpath {}." .format(transition_identifier, "TODO"))
+                self.status.set_description("Executing post-action {}, subpath {}."
+                        .format(transition_identifier, userdata.currentSection))
                 self.event_done_min_time = rsp.start_time
                 self._wait_for_event_done(rate, "post-action")
                 self.status.wait_if_step_by_step("Post-action ended.", 2)
@@ -332,6 +340,7 @@ def makeStateMachine():
             remapping={
                 "transitionId": "transitionId",
                 "duration": "duration",
+                "currentSection": "currentSection",
                 "queue_initialized": "queue_initialized",
             },
         )
