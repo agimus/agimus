@@ -8,6 +8,7 @@ ENDFOREACH()
 SET (PYTHON_FILE
     initialize_path.py
     play_path.py
+    status.py
     wait_for_input.py
     __init__.py)
 

@@ -32,31 +32,8 @@ import smach
 import std_srvs.srv
 from agimus_hpp import ros_tools
 from agimus_hpp.client import HppClient
-from std_msgs.msg import Empty
 from agimus_sot_msgs.msg import ReadSubPath
 from agimus_sot_msgs.srv import PlugSot
-
-## Waits if the step by step level is lower than level
-#
-# The step by step level is stored in ROS param `step_by_step`.
-# \param msg human readable message.
-# \param level 0 means *always wait*.
-# \param time to wait **after** the message is received.
-#
-# \todo It should be possible to handle errors while waiting for user input.
-def wait_if_step_by_step(msg, level, time=0.1):
-    l = rospy.get_param("step_by_step", 0)
-    if type(l) == bool:
-        l = 10 if l else 0
-    if level < l:
-        rospy.loginfo(
-            "{} Wait for message on {}/step.".format(msg, rospy.get_namespace())
-        )
-        # rospy.wait_for_message (rospy.get_namespace() + "/step", Empty)
-        rospy.wait_for_message("step", Empty)
-        rospy.sleep(time)
-
-
 
 ## State of \c smach finite-state machine
 #
@@ -74,7 +51,7 @@ class InitializePath(smach.State):
         "hpp": {"target": {"publish_first": [std_srvs.srv.Trigger]}},
     }
 
-    def __init__(self):
+    def __init__(self, status):
         super(InitializePath, self).__init__(
             outcomes=["finished", "next"],
             input_keys=[
@@ -86,6 +63,7 @@ class InitializePath(smach.State):
             ],
             output_keys=["transitionId", "endStateId", "currentSection", "duration"],
         )
+        self.status = status
 
         self.targetPub = ros_tools.createPublishers(
             "/hpp/target", self.hppTargetPubDict
@@ -126,8 +104,10 @@ class InitializePath(smach.State):
         userdata.endStateId = userdata.endStateIds[userdata.currentSection]
         userdata.duration = length
 
-        wait_if_step_by_step("Preparing to read subpath.", 3)
+        self.status.wait_if_step_by_step("Preparing to read subpath.", 3)
 
+        self.status.set_description("Preparing publication of subpath {}, action {}."
+                .format(userdata.pathId, transitionId[1]))
         manip = self.hppclient._manip()
         manip.graph.selectGraph(transitionId[1])
         self.targetPub["read_subpath"].publish(
@@ -135,5 +115,3 @@ class InitializePath(smach.State):
         )
         rospy.loginfo("Start reading subpath.")
         return "next"
-
-
