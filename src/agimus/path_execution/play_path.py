@@ -35,8 +35,9 @@ from agimus_hpp import ros_tools
 from agimus_hpp.client import HppClient
 from agimus_sot_msgs.srv import GetInt, PlugSot, ReadQueue, WaitForMinQueueSize
 from std_msgs.msg import Empty, Int32, String, UInt32
-from initialize_path import InitializePath
-from wait_for_input import WaitForInput
+from .initialize_path import InitializePath
+from .wait_for_input import WaitForInput
+from .error_state import ErrorState
 
 class ErrorEvent(Exception):
     def __init__(self, value):
@@ -139,8 +140,10 @@ class PlayPath(smach.State):
         while self.event_done is None or (
                 self.event_done < self.event_done_min_time and self.event_done != 0):
             if self.event_error is not None:
+                exception = ErrorEvent("ErrorEvent during {}: {}".format(msg, self.event_error))
                 self.event_done = None
-                raise ErrorEvent("ErrorEvent during {}: {}".format(msg, self.event_error))
+                self.event_error = None
+                raise exception
             if rospy.is_shutdown():
                 raise ErrorEvent("Requested rospy shutdown")
             rate.sleep()
@@ -324,12 +327,19 @@ def makeStateMachine():
             transitions={
                 "succeeded": "Init",
                 "aborted": "WaitForInput",
-                "preempted": "WaitForInput",
+                "preempted": "Error",
             },
             remapping={
                 "transitionId": "transitionId",
                 "duration": "duration",
                 "queue_initialized": "queue_initialized",
+            },
+        )
+        smach.StateMachine.add(
+            "Error",
+            ErrorState(status),
+            transitions={
+                "finished": "WaitForInput",
             },
         )
 
