@@ -35,8 +35,9 @@ from agimus_hpp import ros_tools
 from agimus_hpp.client import HppClient
 from agimus_sot_msgs.srv import GetInt, PlugSot, ReadQueue, WaitForMinQueueSize
 from std_msgs.msg import Empty, Int32, String, UInt32
-from initialize_path import InitializePath, wait_if_step_by_step
-from wait_for_input import WaitForInput
+from .initialize_path import InitializePath
+from .wait_for_input import WaitForInput
+from .error_state import ErrorState
 
 class ErrorEvent(Exception):
     def __init__(self, value):
@@ -84,12 +85,14 @@ class PlayPath(smach.State):
         },
     }
 
-    def __init__(self):
+    def __init__(self, status):
         super(PlayPath, self).__init__(
             outcomes=["succeeded", "aborted", "preempted"],
-            input_keys=["transitionId", "endStateId", "duration", "queue_initialized"],
+            input_keys=["transitionId", "endStateId", "duration",
+                "currentSection", "queue_initialized"],
             output_keys=["queue_initialized"],
         )
+        self.status = status
 
         self.targetPub = ros_tools.createPublishers(
             "/hpp/target", self.hppTargetPubDict
@@ -133,17 +136,23 @@ class PlayPath(smach.State):
         rospy.loginfo("Publishing path done.")
 
     def _wait_for_event_done(self, rate, msg):
-        rospy.loginfo("Wait for event on /agimus/sot/event/done after {} (current: {})"
-                .format(self.event_done_min_time, self.event_done))
-        while self.event_done is None or (
-                self.event_done < self.event_done_min_time and self.event_done != 0):
-            if self.event_error is not None:
-                self.event_done = None
-                raise ErrorEvent("ErrorEvent during {}: {}".format(msg, self.event_error))
-            if rospy.is_shutdown():
-                raise ErrorEvent("Requested rospy shutdown")
-            rate.sleep()
-        self.event_done = None
+        try:
+            rospy.loginfo("Wait for event on /agimus/sot/event/done after {} (current: {})"
+                    .format(self.event_done_min_time, self.event_done))
+            self.status.set_wait_for_event_done(True)
+            while self.event_done is None or (
+                    self.event_done < self.event_done_min_time and self.event_done != 0):
+                if self.event_error is not None:
+                    exception = ErrorEvent("ErrorEvent during {}: {}".format(msg, self.event_error))
+                    self.event_done = None
+                    self.event_error = None
+                    raise exception
+                if rospy.is_shutdown():
+                    raise ErrorEvent("Requested rospy shutdown")
+                rate.sleep()
+            self.event_done = None
+        finally:
+            self.status.set_wait_for_event_done(False)
 
     ## Execute a sub-path
     #
@@ -160,9 +169,10 @@ class PlayPath(smach.State):
     # \todo error handling, like object not in gripper when closing it.
     def execute(self, userdata):
         rate = rospy.Rate(1000)
+        transition_identifier = "{} of {}".format(*userdata.transitionId)
 
         try:
-            wait_if_step_by_step("Beginning execution.", 3)
+            self.status.wait_if_step_by_step("Beginning execution.", 3)
 
             first_published = False
             if not userdata.queue_initialized:
@@ -187,6 +197,8 @@ class PlayPath(smach.State):
                 userdata.transitionId[0], userdata.transitionId[1]
             )
             if status.success:
+                self.status.set_description("Executing pre-action {}, subpath {}."
+                        .format(transition_identifier, userdata.currentSection))
                 rospy.loginfo("Start pre-action")
                 if not first_published:
                     rsp = self.serviceProxies["hpp"]["target"]["publish_first"]()
@@ -208,7 +220,7 @@ class PlayPath(smach.State):
                         "Could not read queues for pre-action: " + rsp.message
                     )
                 self._wait_for_event_done(rate, "pre-actions")
-                wait_if_step_by_step("Pre-action ended.", 2)
+                self.status.wait_if_step_by_step("Pre-action ended.", 2)
 
             rospy.loginfo("Publishing path")
             self.path_published = False
@@ -216,6 +228,8 @@ class PlayPath(smach.State):
             queueSize = self.serviceProxies["hpp"]["target"]["get_queue_size"]().data
             self.targetPub["publish"].publish()
 
+            self.status.set_description("Executing action {}, subpath {}."
+                    .format(transition_identifier, userdata.currentSection))
             status = self.serviceProxies["agimus"]["sot"]["plug_sot"](
                 userdata.transitionId[0], userdata.transitionId[1]
             )
@@ -252,7 +266,7 @@ class PlayPath(smach.State):
                 rate.sleep()
                 # TODO stop publishing queues
 
-            wait_if_step_by_step("Action ended.", 2)
+            self.status.wait_if_step_by_step("Action ended.", 2)
 
             # Run post action if any
             rospy.loginfo("Start post-action")
@@ -261,9 +275,11 @@ class PlayPath(smach.State):
             )
 
             if status.success:
+                self.status.set_description("Executing post-action {}, subpath {}."
+                        .format(transition_identifier, userdata.currentSection))
                 self.event_done_min_time = rsp.start_time
                 self._wait_for_event_done(rate, "post-action")
-                wait_if_step_by_step("Post-action ended.", 2)
+                self.status.wait_if_step_by_step("Post-action ended.", 2)
 
             return "succeeded"
         except ErrorEvent as e:
@@ -273,16 +289,19 @@ class PlayPath(smach.State):
 
 
 def makeStateMachine():
+    from .status import Status
+
     # Set default values of parameters
     if not rospy.has_param("step_by_step"):
         rospy.set_param("step_by_step", 0)
 
     sm = smach.StateMachine(outcomes=["aborted",])
+    status = Status()
 
     with sm:
         smach.StateMachine.add(
             "WaitForInput",
-            WaitForInput(),
+            WaitForInput(status),
             transitions={
                 "start_path": "Init",
                 "failed_to_start": "WaitForInput",
@@ -298,7 +317,7 @@ def makeStateMachine():
         )
         smach.StateMachine.add(
             "Init",
-            InitializePath(),
+            InitializePath(status),
             transitions={
                 "finished": "WaitForInput",
                 "next": "Play",
@@ -312,16 +331,24 @@ def makeStateMachine():
         )
         smach.StateMachine.add(
             "Play",
-            PlayPath(),
+            PlayPath(status),
             transitions={
                 "succeeded": "Init",
                 "aborted": "WaitForInput",
-                "preempted": "WaitForInput",
+                "preempted": "Error",
             },
             remapping={
                 "transitionId": "transitionId",
                 "duration": "duration",
+                "currentSection": "currentSection",
                 "queue_initialized": "queue_initialized",
+            },
+        )
+        smach.StateMachine.add(
+            "Error",
+            ErrorState(status),
+            transitions={
+                "finished": "WaitForInput",
             },
         )
 

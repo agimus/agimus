@@ -11,7 +11,7 @@ from python_qt_binding.QtWidgets import (
     QWidget,
 )
 from qt_gui.plugin import Plugin
-from std_msgs.msg import Empty as EmptyMsg, Int32, UInt32
+from std_msgs.msg import Empty as EmptyMsg, Bool, Int32, UInt32, String
 from std_srvs.srv import Empty as EmptySrv
 
 
@@ -21,6 +21,11 @@ class PathExecution(Plugin):
     PathExecutionTopic = "/agimus/start_path"
     PublishStateService = "/agimus/sot/publish_state"
     EventDoneTopic = "/agimus/sot/event/done"
+    EventErrorTopic = "/agimus/sot/event/error"
+    StatusDescriptionTopic = "/agimus/status/description"
+    StatusWaitStepByStepTopic = "/agimus/status/is_waiting_for_step_by_step"
+    StatusRunningTopic = "/agimus/status/running"
+    StatusWaitEventDoneTopic = "/agimus/status/is_waiting_for_event_done"
 
     def __init__(self, context):
         super(PathExecution, self).__init__(context)
@@ -42,6 +47,19 @@ class PathExecution(Plugin):
         self.event_done_publisher = rospy.Publisher(
             PathExecution.EventDoneTopic, Int32, queue_size=1
         )
+        self.event_error_publisher = rospy.Publisher(
+            PathExecution.EventErrorTopic, Int32, queue_size=1
+        )
+        self.subs = {
+                "status/description": rospy.Subscriber (PathExecution.StatusDescriptionTopic,
+                    String, lambda msg: self._status_desc.setText(msg.data)),
+                "status/is_waiting_for_step_by_step": rospy.Subscriber (PathExecution.StatusWaitStepByStepTopic,
+                    Bool, lambda msg: self._one_step_button.setEnabled(msg.data)),
+                "status/is_waiting_for_event_done": rospy.Subscriber (PathExecution.StatusWaitEventDoneTopic,
+                    Bool, lambda msg: self._send_event_done.setEnabled(msg.data)),
+                "status/running": rospy.Subscriber (PathExecution.StatusRunningTopic,
+                    Bool, lambda msg: self._execute_path.setEnabled(not msg.data)),
+                }
 
         # Create QWidget
         self._widget = QWidget()
@@ -56,6 +74,18 @@ class PathExecution(Plugin):
             self._layout.addWidget(spacer, row, 1, 1, 2)
 
         row = 0
+
+        # Status
+        self._layout.addWidget(QLabel("Current status"), row, 1, 1, 2, Qt.AlignCenter)
+        row += 1
+
+        self._status_desc = QLabel()
+        self._layout.addWidget(self._status_desc, row, 1, 1, 2, Qt.AlignLeft)
+        row += 1
+
+        # Spacer
+        add_space(row)
+        row += 1
 
         # Step by step
         self._layout.addWidget(QLabel("Step by step"), row, 1, 1, 2, Qt.AlignCenter)
@@ -77,6 +107,7 @@ class PathExecution(Plugin):
 
         self._one_step_button = QPushButton("Execute one step")
         self._one_step_button.clicked.connect(lambda x: self.step_publisher.publish())
+        self._one_step_button.setEnabled(False)
         self._layout.addWidget(self._one_step_button, row, 2)
         row += 1
 
@@ -90,14 +121,14 @@ class PathExecution(Plugin):
 
         self.path_index_spin_box = QSpinBox()
         self.path_index_spin_box.setRange(0, 10000)
-        execute_path = QPushButton("Execute path")
-        execute_path.clicked.connect(
+        self._execute_path = QPushButton("Execute path")
+        self._execute_path.clicked.connect(
             lambda unused: self.path_execution_publisher.publish(
                 self.path_index_spin_box.value()
             )
         )
         self._layout.addWidget(self.path_index_spin_box, row, 1)
-        self._layout.addWidget(execute_path, row, 2)
+        self._layout.addWidget(self._execute_path, row, 2)
         row += 1
 
         # Spacer
@@ -113,9 +144,16 @@ class PathExecution(Plugin):
         self._layout.addWidget(publish_state, row, 2)
         row += 1
 
-        send_event_done = QPushButton("Send event done.")
-        send_event_done.clicked.connect(lambda x: self.event_done_publisher.publish(0))
-        self._layout.addWidget(send_event_done, row, 2)
+        self._send_event_done = QPushButton("Trigger event done.")
+        self._send_event_done.clicked.connect(lambda x: self.event_done_publisher.publish(0))
+        self._send_event_done.setEnabled(False)
+        self._layout.addWidget(self._send_event_done, row, 2)
+        row += 1
+
+        send_event_error = QPushButton("Trigger event error.")
+        send_event_error.setStyleSheet("QPushButton { background-color: red }")
+        send_event_error.clicked.connect(lambda x: self.event_error_publisher.publish(0))
+        self._layout.addWidget(send_event_error, row, 2)
         row += 1
 
         geom_simu_paused = QPushButton("Pause geometric simu.")

@@ -1,7 +1,12 @@
 #
-# Copyright (c) 2014 CNRS-LAAS
-# Author: Florent Lamiraux
+# Copyright (c) 2018 CNRS-LAAS
+# Author: Joseph Mirabel
 #
+
+
+ifndef DEVEL_HPP_DIR
+$(error Environment variable DEVEL_HPP_DIR not defined. Did you source config.sh ?)
+endif
 
 SRC_DIR=${DEVEL_HPP_DIR}/src
 ifndef INSTALL_DIR

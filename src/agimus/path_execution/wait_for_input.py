@@ -63,7 +63,7 @@ class WaitForInput(smach.State):
         "hpp": {"target": {"reset_topics": [std_srvs.srv.Empty]}},
     }
 
-    def __init__(self):
+    def __init__(self, status):
         super(WaitForInput, self).__init__(
             outcomes=["start_path", "interrupted", "failed_to_start"],
             input_keys=[],
@@ -76,16 +76,12 @@ class WaitForInput(smach.State):
                 "queue_initialized",
             ],
         )
+        self.status = status
 
         rospy.logwarn("Create service WaitForInput")
         self.services = ros_tools.createServiceProxies("", self.serviceProxiesDict)
-        self.status_srv = rospy.Service("status", std_srvs.srv.Trigger, self.getStatus)
         self.hppclient = HppClient(context="corbaserver")
         self.ready = False
-        self.status = "not started"
-
-    def getStatus(self, empty):
-        return self.ready, self.status
 
     ## Wait for message "start_path"
     #
@@ -100,7 +96,8 @@ class WaitForInput(smach.State):
     #  \li a list of final states of the transitions is built and stored in
     #      \code userdata.endStateIds\endcode.
     def execute(self, userdata):
-        self.status = "waiting"
+        self.status.set_description("Waiting for path to execute.")
+        self.status.set_running(False)
         self.ready = True
         try:
             res = rospy.wait_for_message("start_path", UInt32)
@@ -108,7 +105,8 @@ class WaitForInput(smach.State):
             return "interrupted"
         self.ready = False
         pid = res.data
-        self.status = "playing path " + str(pid)
+        self.status.set_description("Playing path {}.".format(pid))
+        self.status.set_running(True)
         rospy.loginfo("Requested to start path " + str(pid))
         userdata.pathId = pid
         userdata.queue_initialized = False
