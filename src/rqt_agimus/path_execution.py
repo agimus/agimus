@@ -70,6 +70,7 @@ class PathExecution(Plugin):
         row += 1
 
         self._status_desc = QLabel()
+        self._status_desc.setWordWrap(True);
         self._layout.addWidget(self._status_desc, row, 1, 1, 2, Qt.AlignLeft)
         row += 1
 
