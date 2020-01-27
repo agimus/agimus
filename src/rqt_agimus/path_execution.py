@@ -50,16 +50,6 @@ class PathExecution(Plugin):
         self.event_error_publisher = rospy.Publisher(
             PathExecution.EventErrorTopic, Int32, queue_size=1
         )
-        self.subs = {
-                "status/description": rospy.Subscriber (PathExecution.StatusDescriptionTopic,
-                    String, lambda msg: self._status_desc.setText(msg.data)),
-                "status/is_waiting_for_step_by_step": rospy.Subscriber (PathExecution.StatusWaitStepByStepTopic,
-                    Bool, lambda msg: self._one_step_button.setEnabled(msg.data)),
-                "status/is_waiting_for_event_done": rospy.Subscriber (PathExecution.StatusWaitEventDoneTopic,
-                    Bool, lambda msg: self._send_event_done.setEnabled(msg.data)),
-                "status/running": rospy.Subscriber (PathExecution.StatusRunningTopic,
-                    Bool, lambda msg: self._execute_path.setEnabled(not msg.data)),
-                }
 
         # Create QWidget
         self._widget = QWidget()
@@ -80,6 +70,7 @@ class PathExecution(Plugin):
         row += 1
 
         self._status_desc = QLabel()
+        self._status_desc.setWordWrap(True);
         self._layout.addWidget(self._status_desc, row, 1, 1, 2, Qt.AlignLeft)
         row += 1
 
@@ -190,6 +181,17 @@ class PathExecution(Plugin):
             )
         # Add widget to the user interface
         context.add_widget(self._widget)
+
+        self.subs = {
+                "status/description": rospy.Subscriber (PathExecution.StatusDescriptionTopic,
+                    String, lambda msg: self._status_desc.setText(msg.data)),
+                "status/is_waiting_for_step_by_step": rospy.Subscriber (PathExecution.StatusWaitStepByStepTopic,
+                    Bool, lambda msg: self._one_step_button.setEnabled(msg.data)),
+                "status/is_waiting_for_event_done": rospy.Subscriber (PathExecution.StatusWaitEventDoneTopic,
+                    Bool, lambda msg: self._send_event_done.setEnabled(msg.data)),
+                "status/running": rospy.Subscriber (PathExecution.StatusRunningTopic,
+                    Bool, lambda msg: self._execute_path.setEnabled(not msg.data)),
+                }
 
     def publishState(self):
         try:
