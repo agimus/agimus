@@ -145,6 +145,8 @@ class PlayPath(smach.State):
     # \note if value provided by topic "/agimus/sot/event/done" is less than
     #       threshold self.event_done_min_time, or value is provided by topic
     #       "/agimus/sot/event/error, an exception is raised.
+    #       if value is equal to zero, it is considered as a user request and
+    #       it is accepted.
     def _wait_for_event_done(self, rate, msg):
         try:
             rospy.loginfo("Wait for event on /agimus/sot/event/done after {} (current: {})"
