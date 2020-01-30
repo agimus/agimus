@@ -135,6 +135,16 @@ class PlayPath(smach.State):
         self.path_published = True
         rospy.loginfo("Publishing path done.")
 
+    ## Wait until new value is provided by topic "/agimus/sot/event/done"
+    #
+    #  \li publish True in topic "/agimus/status/is_waiting_for_event_done",
+    #  \li wait until integer value is provided by topic
+    #      "/agimus/sot/event/done" (by the Stack of Tasks),
+    #  \li publish False in topic "/agimus/status/is_waiting_for_event_done".
+    #
+    # \note if value provided by topic "/agimus/sot/event/done" is less than
+    #       threshold self.event_done_min_time, or value is provided by topic
+    #       "/agimus/sot/event/error, an exception is raised.
     def _wait_for_event_done(self, rate, msg):
         try:
             rospy.loginfo("Wait for event on /agimus/sot/event/done after {} (current: {})"
