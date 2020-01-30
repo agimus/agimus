@@ -107,7 +107,7 @@ class InitializePath(smach.State):
         self.status.wait_if_step_by_step("Preparing to read subpath.", 3)
 
         self.status.set_description("Preparing publication of subpath {}, action {}."
-                .format(userdata.pathId, transitionId[1]))
+                .format(userdata.pathId, transitionId[0]))
         manip = self.hppclient._manip()
         manip.graph.selectGraph(transitionId[1])
         self.targetPub["read_subpath"].publish(
