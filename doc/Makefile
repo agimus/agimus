@@ -56,6 +56,7 @@ agimus_sot_msgs_repository=${AGIMUS_REPO}
 
 agimus-hpp_branch=master
 agimus-hpp_repository=${AGIMUS_REPO}
+agimus-hpp_extra_flags=-DBUILD_ROS_INTERFACE=ON
 
 agimus-vision_branch=master
 agimus-vision_repository=${AGIMUS_REPO}

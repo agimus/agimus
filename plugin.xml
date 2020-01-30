@@ -16,4 +16,21 @@
       <statustip>Open a GUI to supervise path execution in Agimus.</statustip>
     </qtgui>
   </class>
+  <class name="Agimus simulation"
+	 type="rqt_agimus.simulation.Simulation"
+	 base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A Python GUI plugin to supervise simulation in Agimus
+    </description>
+    <qtgui>
+      <group>
+        <label>Agimus</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to Agimus.</statustip>
+      </group>
+      <label>Agimus simulation</label>
+      <icon type="theme">applications-python</icon>
+      <statustip>Open a GUI to supervise simulation in Agimus.</statustip>
+    </qtgui>
+  </class>
 </library>
