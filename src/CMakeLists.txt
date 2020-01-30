@@ -19,6 +19,7 @@ ENDFOREACH()
 
 SET (PYTHON_FILE
     path_execution.py
+    simulation.py
     __init__.py)
 
 FOREACH(F ${PYTHON_FILE})
