@@ -2,8 +2,9 @@
 agimus-demos.configure.dep:
 agimus-vision.configure.dep:
 agimus-hpp.configure.dep: hpp-corbaserver.install hpp-manipulation-corba.install \
-	agimus_sot_msgs.install
-agimus-sot.configure.dep: hpp-manipulation-corba.install agimus_sot_msgs.install
+	dynamic_graph_bridge_msgs.install agimus_sot_msgs.install
+agimus-sot.configure.dep: hpp-manipulation-corba.install \
+	dynamic_graph_bridge.install agimus_sot_msgs.install
 agimus.configure.dep: agimus-hpp.install agimus_sot_msgs.install
 agimus_sot_msgs.configure.dep:
 agimus-doc.configure.dep: agimus.install agimus-hpp.install agimus-sot.install
