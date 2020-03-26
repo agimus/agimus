@@ -39,7 +39,7 @@ sot-talos_repository=${SOT_REPO}
 sot-talos_extra_flags=-DSUFFIX_SO_VERSION=OFF
 
 talos_data_branch=master
-talos_data_repository=${PYRENE_DEV_REPO}
+talos_data_repository=${SOT_GEPGITLAB_REPO}
 
 talos_metapkg_ros_control_sot_branch=master
 talos_metapkg_ros_control_sot_repository=${SOT_REPO}
