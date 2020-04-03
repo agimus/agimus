@@ -1,5 +1,6 @@
 ##### Pinocchio #######################################
 eigenpy.configure.dep:
+hpp-fcl.configure.dep:
 pinocchio.configure.dep: eigenpy.install
 
 ##### Dynamic graph #######################################
