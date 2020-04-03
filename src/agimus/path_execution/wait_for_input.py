@@ -156,10 +156,10 @@ class WaitForInput(smach.State):
             # TODO shouldn't this be done by the estimation node ?
             # moreover, this assumes that HPP has a free-floating base.
             from agimus_hpp.tools import hppPoseToSotTransRPY
-
-            self.services["agimus"]["sot"]["set_base_pose"](
-                *hppPoseToSotTransRPY(tqs[0][:7])
-            )
+            jointNames = hpp.robot.getJointNames()
+            if jointNames[0].endswith("root_joint"):
+                basePose, = hpp.robot.getJointsPosition(tqs[0], jointNames[:1])
+                self.services["agimus"]["sot"]["set_base_pose"](*hppPoseToSotTransRPY(basePose))
             rospy.sleep(0.001)
             # TODO check that qs[0] and the current robot configuration are
             # close
