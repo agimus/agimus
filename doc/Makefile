@@ -17,8 +17,8 @@ endif
 # GEPGITLAB_WEBSITE=git@gepgitlab.laas.fr:
 # GITHUB_WEBSITE=git@github.com:
 
-# For SoT developpers only
-# INSTALL_SOT_FROM_SOURCE=TRUE
+# Install hpp and sot from source
+# INSTALL_FROM_SOURCE=TRUE
 
 BUILD_TYPE=Release
 
@@ -36,7 +36,25 @@ else
   include ${config.mk}
 endif
 
-all: agimus.install agimus-sot.install hpp-gepetto-viewer.install rviz_camera_stream.install rviz_lighting.install
+all: agimus.install agimus-sot.install rviz_camera_stream.install rviz_lighting.install
+
+do-nothing:
+ifneq (${INSTALL_FROM_SOURCE}, "TRUE")
+dynamic-graph.install: do-nothing
+dynamic-graph-python.install: do-nothing
+dynamic_graph_bridge.install: do-nothing
+dynamic_graph_bridge_msgs.install: do-nothing
+sot-core.install: do-nothing
+sot-tools.install: do-nothing
+sot-dynamic-pinocchio.install: do-nothing
+roscontrol_sot.install: do-nothing
+sot-talos.install: do-nothing
+talos_data.install: do-nothing
+talos_metapkg_ros_control_sot.install: do-nothing
+sot-tiago.install: do-nothing
+tiago_data.install: do-nothing
+tiago_metapkg_ros_control_sot.install: do-nothing
+endif
 
 bootstrap:
 	@if [ -d "agimus" ]; then \
@@ -67,66 +85,8 @@ agimus-demos_repository=${AGIMUS_REPO}
 agimus-doc_branch=master
 agimus-doc_repository=${AGIMUS_REPO}
 
-hpp-corbaserver_branch=devel
-hpp-corbaserver_repository=${HPP_REPO}
-hpp-corbaserver_extra_flags=-DCLIENT_ONLY=TRUE
-
-hrp2-14-description_branch=master
-hrp2-14-description_repository=${TRAC_REPO}
-
-hpp-hrp2_branch=devel
-hpp-hrp2_repository=${HPP_REPO}
-
-robot_capsule_urdf_branch=groovy
-robot_capsule_urdf_repository=${LAAS_REPO}
-
-robot_model_py_branch=groovy
-robot_model_py_repository=${LAAS_REPO}
-
-hpp-manipulation-corba_branch=devel
-hpp-manipulation-corba_repository=${HPP_REPO}
-hpp-manipulation-corba_extra_flags=-DCLIENT_ONLY=TRUE
-
-hpp-tools_branch=master
-hpp-tools_repository=${HPP_REPO}
-hpp-tools_extra_flags=
-
-iai_maps_branch=devel
-iai_maps_repository=${HPP_REPO}
-
-gepetto-viewer-corba_branch=devel
-gepetto-viewer-corba_repository=${HPP_REPO}
-gepetto-viewer-corba_extra_flags=-DCLIENT_ONLY=TRUE
-ifeq (${QT_VERSION}, 5)
-  gepetto-viewer-corba_extra_flags+= -DUSE_QT4=OFF
-endif
-
-hpp-gepetto-viewer_branch=devel
-hpp-gepetto-viewer_repository=${HPP_REPO}
-
-hpp-environments_branch=devel
-hpp-environments_repository=${HPP_REPO}
-
-universal_robot_branch=kinetic
-universal_robot_repository=${HPP_REPO}
-
-hpp_universal_robot_branch=devel
-hpp_universal_robot_repository=${HPP_REPO}
-
-baxter_common_branch=master
-baxter_common_repository=${RETHINK_ROBOTICS_REPO}
-
-hpp-baxter_branch=master
-hpp-baxter_repository=${HPP_REPO}
-
-hpp_romeo_branch=master
-hpp_romeo_repository=${HPP_REPO}
-
 gerard-bauzil_branch=master
 gerard-bauzil_repository=${GEPETTO_GEPGITLAB_REPO}
-
-romeo_branch=master
-romeo_repository=${HPP_REPO}
 
 hpp_tiago_branch=master
 hpp_tiago_repository=${HPP_REPO}
@@ -140,7 +100,7 @@ rviz_lighting_repository=${AGIMUS_REPO}
 roslaunch_to_dot_branch=master
 roslaunch_to_dot_repository=https://github.com/bponsler
 
-ifeq (${INSTALL_SOT_FROM_SOURCE}, TRUE)
+ifeq (${INSTALL_FROM_SOURCE}, TRUE)
 	include ${sot_repos.mk}
 endif
 

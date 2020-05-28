@@ -1,17 +1,5 @@
 PYTHON_EXECUTABLE?=/usr/bin/python2
 
-eigenpy_branch=master
-eigenpy_repository=${SOT_REPO}
-eigenpy_extra_flags= -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}
-
-hpp-fcl_branch=devel
-hpp-fcl_repository=${HPP_REPO}
-hpp-fcl_extra_flags= -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}
-
-pinocchio_branch=v2.2.3
-pinocchio_repository=${SOT_REPO}
-pinocchio_extra_flags=-DBUILD_UNIT_TESTS=OFF -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}
-
 dynamic-graph_branch=master
 dynamic-graph_repository=${SOT_REPO}
 dynamic-graph_extra_flags=-DSUFFIX_SO_VERSION=OFF
