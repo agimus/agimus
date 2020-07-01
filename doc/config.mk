@@ -2,6 +2,7 @@
 GEPGITLAB_WEBSITE      ?=https://gepgitlab.laas.fr/
 GEPETTO_GEPGITLAB_REPO ?=${GEPGITLAB_WEBSITE}gepetto
 PYRENE_DEV_REPO        ?=${GEPGITLAB_WEBSITE}pyrene-dev
+SOT_GEPGITLAB_REPO     ?=${GEPGITLAB_WEBSITE}stack-of-tasks
 
 GITHUB_WEBSITE         ?=https://github.com/
 AGIMUS_REPO            ?=${GITHUB_WEBSITE}agimus

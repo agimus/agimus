@@ -140,5 +140,3 @@ update:
 		cat .git/refs/heads/${$(@:.log=)_branch}; \
 	fi
 
-include agimus/doc/dependencies.mk
-include agimus/doc/specific-rules.mk
