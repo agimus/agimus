@@ -62,7 +62,7 @@ agimus-vision_repository=${AGIMUS_REPO}
 agimus-demos_branch=v1.0.0
 agimus-demos_repository=${AGIMUS_REPO}
 
-agimus-doc_branch=master
+agimus-doc_branch=v1.0.0
 agimus-doc_repository=${AGIMUS_REPO}
 
 gerard-bauzil_branch=master
