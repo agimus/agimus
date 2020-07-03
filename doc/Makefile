@@ -43,7 +43,7 @@ ifeq (${INSTALL_FROM_SOURCE}, TRUE)
 	include ${sot_repos.mk}
 endif
 
-agimus_branch=v1.0.0
+agimus_branch=demo-pyrene
 agimus_repository=https://github.com/agimus
 
 agimus-sot_branch=v1.0.2
