@@ -46,7 +46,7 @@ endif
 agimus_branch=v1.0.0
 agimus_repository=https://github.com/agimus
 
-agimus-sot_branch=v1.0.0
+agimus-sot_branch=v1.0.2
 agimus-sot_repository=${AGIMUS_REPO}
 
 agimus_sot_msgs_branch=v1.0.0
@@ -59,7 +59,7 @@ agimus-hpp_extra_flags=-DBUILD_ROS_INTERFACE=ON -DBUILD_HPP_PLUGIN=ON
 agimus-vision_branch=v1.0.0
 agimus-vision_repository=${AGIMUS_REPO}
 
-agimus-demos_branch=v1.0.0
+agimus-demos_branch=v1.1.0
 agimus-demos_repository=${AGIMUS_REPO}
 
 agimus-doc_branch=v1.0.0
