@@ -59,7 +59,7 @@ agimus-hpp_extra_flags=-DBUILD_ROS_INTERFACE=ON -DBUILD_HPP_PLUGIN=ON
 agimus-vision_branch=v1.0.0
 agimus-vision_repository=${AGIMUS_REPO}
 
-agimus-demos_branch=v1.1.0
+agimus-demos_branch=v1.1.1
 agimus-demos_repository=${AGIMUS_REPO}
 
 agimus-doc_branch=v1.0.0
