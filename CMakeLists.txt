@@ -39,7 +39,7 @@ catkin_package()
 
 # Required for the ros_tools Python module and the Python class HppClient
 # Should it only be agimus_hpp_msgs ?
-ADD_REQUIRED_DEPENDENCY("agimus_hpp")
+ADD_REQUIRED_DEPENDENCY("agimus-hpp")
 ADD_REQUIRED_DEPENDENCY("agimus_sot_msgs")
 
 ADD_SUBDIRECTORY(src)
