@@ -1,0 +1,41 @@
+repositories:
+  agimus:
+    type: git
+    url: https://github.com/agimus/agimus.git
+    version: master
+  agimus-demos:
+    type: git
+    url: https://github.com/agimus/agimus-demos
+    version: master
+  agimus-doc:
+    type: git
+    url: https://github.com/agimus/agimus-doc
+    version: master
+  agimus-hpp:
+    type: git
+    url: https://github.com/agimus/agimus-hpp
+    version: master
+  agimus-sot:
+    type: git
+    url: https://github.com/agimus/agimus-sot
+    version: master
+  agimus-vision:
+    type: git
+    url: https://github.com/agimus/agimus-vision
+    version: master
+  agimus_sot_msgs:
+    type: git
+    url: https://github.com/agimus/agimus_sot_msgs
+    version: master
+  rviz_camera_stream:
+    type: git
+    url: https://github.com/agimus/rviz_camera_stream
+    version: master
+  rviz_lighting:
+    type: git
+    url: https://github.com/agimus/rviz_lighting
+    version: master
+  rob4fam-models:
+    type: git
+    url: https://gitlab.laas.fr/rob4fam/rob4fam-models
+    version: master
