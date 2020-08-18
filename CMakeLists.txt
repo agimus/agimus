@@ -18,14 +18,18 @@
 # Requires at least CMake 2.6 to configure the package.
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-INCLUDE(cmake/base.cmake)
-INCLUDE(cmake/python.cmake)
+set(PROJECT_NAME agimus)
+set(PROJECT_DESCRIPTION "Software framework for manipulation planning and execution.")
+set(PROJECT_URL "")
+set(PROJECT_USE_CMAKE_EXPORT TRUE)
+set(PROJECT_EXPORT_NO_TARGET TRUE)
 
-SET(PROJECT_NAME agimus)
-SET(PROJECT_DESCRIPTION "Software framework for manipulation planning and execution.")
-SET(PROJECT_URL "")
+include(cmake/base.cmake)
+include(cmake/python.cmake)
 
-SETUP_PROJECT()
+compute_project_args(PROJECT_ARGS LANGUAGES CXX)
+project(${PROJECT_NAME} ${PROJECT_ARGS})
+
 FINDPYTHON(2.7 REQUIRED EXACT)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -39,8 +43,8 @@ catkin_package()
 
 # Required for the ros_tools Python module and the Python class HppClient
 # Should it only be agimus_hpp_msgs ?
-ADD_REQUIRED_DEPENDENCY("agimus-hpp")
-ADD_REQUIRED_DEPENDENCY("agimus_sot_msgs")
+add_project_dependency(agimus-hpp)
+add_project_dependency(agimus_sot_msgs)
 
 ADD_SUBDIRECTORY(src)
 
@@ -55,5 +59,3 @@ INSTALL(PROGRAMS
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts)
 INSTALL(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-
-SETUP_PROJECT_FINALIZE()

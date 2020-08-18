@@ -17,7 +17,7 @@ from qt_gui.plugin import Plugin
 from geometry_msgs.msg import TransformStamped
 
 class _TfFrameEditor (QWidget):
-    def __init__ (self, tf_static_broadcast, parent_frame, child_frame, *args):
+    def __init__ (self, tf_static_broadcast, parent_frame, child_frame, initPos, *args):
         super(_TfFrameEditor, self).__init__(*args)
         self.tf_static_broadcast = tf_static_broadcast
 
@@ -29,25 +29,25 @@ class _TfFrameEditor (QWidget):
         self.layout.addRow(QLabel("Static pose from {} to {}"
             .format(parent_frame, child_frame)))
 
-        def wdgt(label, trans):
+        def wdgt(label, value, trans):
             import math
             sb = QDoubleSpinBox ()
-            sb.setValue(0)
             m = 1e3 if trans else math.pi
             sb.setRange(-m, m)
             sb.setDecimals(4)
             sb.setSingleStep(1e-3 if trans else .05)
             sb.setSuffix(" m" if trans else " rad")
             self.layout.addRow(label, sb)
+            sb.setValue(value)
             sb.valueChanged.connect(self.valueChanged)
             return sb
         
-        self.tx = wdgt("X"    , True)
-        self.ty = wdgt("Y"    , True)
-        self.tz = wdgt("Z"    , True)
-        self.rr = wdgt("Roll" , False)
-        self.rp = wdgt("Pitch", False)
-        self.ry = wdgt("Yaw"  , False)
+        self.tx = wdgt("X"    , initPos[0], True)
+        self.ty = wdgt("Y"    , initPos[1], True)
+        self.tz = wdgt("Z"    , initPos[2], True)
+        self.rr = wdgt("Roll" , initPos[3], False)
+        self.rp = wdgt("Pitch", initPos[4], False)
+        self.ry = wdgt("Yaw"  , initPos[5], False)
         self.valueChanged()
 
     def valueChanged (self):
@@ -105,15 +105,22 @@ class Simulation(Plugin):
         parser.add_argument("--tf-editor", type=str, nargs=2, action='append', dest="tf_editors",
                 metavar=("parent_frame_id","child_frame_id"),
                 help="Add a TF frame editor between the parent and child frame.")
+        parser.add_argument("--tf-editor-init", type=str, nargs=8, action='append', dest="tf_editors_init",
+                metavar=("parent_frame_id","child_frame_id", "x", "y", "z", "r", "p", "y"),
+                help="Add a TF frame editor between the parent and child frame, with an initial value.")
         args, unknowns = parser.parse_known_args(context.argv())
 
-        for parent, child in args.tf_editors:
-            self.addTfFrameEditor (parent, child)
+        if args.tf_editors is not None:
+            for parent, child in args.tf_editors:
+                self.addTfFrameEditor (parent, child)
+        if args.tf_editors_init is not None:
+            for parent, child, tx, ty, tz, rr, rp, ry in args.tf_editors_init:
+                self.addTfFrameEditor (parent, child, [ float(tx), float(ty), float(tz), float(rr), float(rp), float(ry) ])
 
-    def addTfFrameEditor (self, parent_frame, child_frame):
+    def addTfFrameEditor (self, parent_frame, child_frame, initPos = [0, 0, 0, 0, 0, 0]):
         if not hasattr(self, 'tf_static_broadcast'):
             self.tf_static_broadcast = tf2_ros.StaticTransformBroadcaster()
-        editor = _TfFrameEditor (self.tf_static_broadcast, parent_frame, child_frame)
+        editor = _TfFrameEditor (self.tf_static_broadcast, parent_frame, child_frame, initPos)
         self._layout.addWidget(editor)
         def space():
             spacer = QFrame()
