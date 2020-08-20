@@ -31,7 +31,6 @@ import rospy
 import smach
 import std_srvs.srv
 from agimus_hpp import ros_tools
-from agimus_hpp.client import HppClient
 from agimus_sot_msgs.msg import ReadSubPath
 from agimus_sot_msgs.srv import PlugSot
 
@@ -51,7 +50,7 @@ class InitializePath(smach.State):
         "hpp": {"target": {"publish_first": [std_srvs.srv.Trigger]}},
     }
 
-    def __init__(self, status):
+    def __init__(self, status, hppclient):
         super(InitializePath, self).__init__(
             outcomes=["finished", "next"],
             input_keys=[
@@ -71,7 +70,7 @@ class InitializePath(smach.State):
         self.serviceProxies = ros_tools.createServiceProxies(
             "", InitializePath.serviceProxiesDict
         )
-        self.hppclient = HppClient(context="corbaserver")
+        self.hppclient = hppclient
 
     ## Initialize the trajectory publisher.
     #
