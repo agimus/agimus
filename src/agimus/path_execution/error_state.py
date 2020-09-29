@@ -31,7 +31,6 @@ import rospy
 import smach
 import std_srvs.srv
 from agimus_hpp import ros_tools
-from agimus_hpp.client import HppClient
 from agimus_sot_msgs.msg import ReadSubPath
 from agimus_sot_msgs.srv import PlugSot
 

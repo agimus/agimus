@@ -32,7 +32,6 @@ import smach
 import smach_ros
 import std_srvs.srv
 from agimus_hpp import ros_tools
-from agimus_hpp.client import HppClient
 from agimus_sot_msgs.srv import GetInt, PlugSot, ReadQueue, WaitForMinQueueSize
 from std_msgs.msg import Empty, Int32, String, UInt32
 from .initialize_path import InitializePath
@@ -311,9 +310,12 @@ def makeStateMachine():
     status = Status()
 
     with sm:
+        from agimus_hpp.client import HppClient
+        hppclient = HppClient(context="corbaserver", connect=False)
+
         smach.StateMachine.add(
             "WaitForInput",
-            WaitForInput(status),
+            WaitForInput(status, hppclient),
             transitions={
                 "start_path": "Init",
                 "failed_to_start": "WaitForInput",
@@ -329,7 +331,7 @@ def makeStateMachine():
         )
         smach.StateMachine.add(
             "Init",
-            InitializePath(status),
+            InitializePath(status, hppclient),
             transitions={
                 "finished": "WaitForInput",
                 "next": "Play",

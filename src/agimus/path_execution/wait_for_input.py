@@ -43,8 +43,7 @@ import rospy
 import smach
 import std_srvs.srv
 from agimus_hpp import ros_tools
-from agimus_hpp.client import HppClient
-from agimus_sot_msgs.srv import SetPose
+from agimus_sot_msgs.srv import SetPose, GetJointNames, SetJointNames
 from std_msgs.msg import UInt32
 
 ## State of \c smach finite-state machine
@@ -58,12 +57,18 @@ class WaitForInput(smach.State):
             "sot": {
                 "request_hpp_topics": [std_srvs.srv.Trigger],
                 "set_base_pose": [SetPose],
+                "get_joint_names": [GetJointNames],
             }
         },
-        "hpp": {"target": {"reset_topics": [std_srvs.srv.Empty]}},
+        "hpp": {
+            "target": {
+                "reset_topics": [std_srvs.srv.Empty],
+                'set_joint_names': [SetJointNames]
+            }
+        }
     }
 
-    def __init__(self, status):
+    def __init__(self, status, hppclient):
         super(WaitForInput, self).__init__(
             outcomes=["start_path", "interrupted", "failed_to_start"],
             input_keys=[],
@@ -80,8 +85,14 @@ class WaitForInput(smach.State):
 
         rospy.logwarn("Create service WaitForInput")
         self.services = ros_tools.createServiceProxies("", self.serviceProxiesDict)
-        self.hppclient = HppClient(context="corbaserver")
+        self.hppclient = hppclient
         self.ready = False
+
+    def connectToHPP(self):
+        success, msg = self.hppclient.tryConnect()
+        if not success:
+            rospy.logerr(msg)
+        return success
 
     ## Wait for message "start_path"
     #
@@ -103,6 +114,15 @@ class WaitForInput(smach.State):
             res = rospy.wait_for_message("start_path", UInt32)
         except rospy.ROSInterruptException as e:
             return "interrupted"
+
+        # Reconnect to HPP
+        if not self.connectToHPP():
+            self.status.set_description("Failed to connect to HPP.")
+            return "failed_to_start"
+
+        # Set the joint list in HPP.
+        self.updateJointList()
+
         self.ready = False
         pid = res.data
         self.status.set_description("Playing path {}.".format(pid))
@@ -169,3 +189,10 @@ class WaitForInput(smach.State):
             rospy.logerr("Failed " + str(e))
             return "failed_to_start"
         return "start_path"
+
+    def updateJointList(self):
+        jointNames = self.services["agimus"]["sot"]["get_joint_names"]()
+        ans = self.services["hpp"]["target"]["set_joint_names"](jointNames.names)
+        if not ans.success:
+            rospy.logerr("Could not set the joint list of hpp_ros_interface node")
+
