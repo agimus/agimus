@@ -37,6 +37,7 @@ from std_msgs.msg import Empty, Int32, String, UInt32
 from .initialize_path import InitializePath
 from .wait_for_input import WaitForInput
 from .error_state import ErrorState
+from .move_base import MoveBase
 
 class ErrorEvent(Exception):
     def __init__(self, value):
@@ -252,10 +253,11 @@ class PlayPath(smach.State):
             rospy.loginfo("Read queue (size {})".format(queueSize))
             # SoT should wait to have a queue larger than 1. This ensures that read_queue won't run into
             # an infinite loop for a very short path (i.e. one configuration only).
-            # SoT should not wait to have a queue larger than 100
+            # SoT should not wait to have a queue larger than 100ms
             # Delay is 1 if the queue is large enough or 10 if it is small.
             # TODO Make maximum queue size and delay parameterizable.
-            queueSize = min(queueSize, 100)
+            dt = rospy.get_param ("/sot_controller/dt")
+            queueSize = min(queueSize, int(0.1 / dt))
             delay = 1 if queueSize > 10 else 10
             rsp = self.serviceProxies["agimus"]["sot"]["read_queue"](
                 delay=delay, minQueueSize=queueSize, duration=userdata.duration, timeout = 1.
@@ -334,6 +336,7 @@ def makeStateMachine():
             InitializePath(status, hppclient),
             transitions={
                 "finished": "WaitForInput",
+                "move_base": "MoveBase",
                 "next": "Play",
             },
             remapping={
@@ -341,6 +344,19 @@ def makeStateMachine():
                 "times": "times",
                 "transitionId": "transitionId",
                 "currentSection": "currentSection",
+            },
+        )
+        smach.StateMachine.add(
+            "MoveBase",
+            MoveBase(status),
+            transitions={
+                "succeeded": "Init",
+                "preempted": "Error",
+            },
+            remapping={
+                "currentSection": "currentSection",
+                "times": "times",
+                "pathId": "pathId",
             },
         )
         smach.StateMachine.add(

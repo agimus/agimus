@@ -52,7 +52,7 @@ class InitializePath(smach.State):
 
     def __init__(self, status, hppclient):
         super(InitializePath, self).__init__(
-            outcomes=["finished", "next"],
+            outcomes=["finished", "move_base", "next"],
             input_keys=[
                 "pathId",
                 "times",
@@ -60,7 +60,9 @@ class InitializePath(smach.State):
                 "endStateIds",
                 "currentSection",
             ],
-            output_keys=["transitionId", "endStateId", "currentSection", "duration"],
+            output_keys=[ "currentSection",
+                "times", "pathId",
+                "transitionId", "endStateId", "duration"],
         )
         self.status = status
 
@@ -95,22 +97,27 @@ class InitializePath(smach.State):
             if not status.success:
                 rospy.logerr ("Could not change controller to 'keep_posture': " + status.msg)
             return "finished"
-        start = userdata.times[userdata.currentSection]
-        length = userdata.times[userdata.currentSection + 1] - start
 
         transitionId = userdata.transitionIds[userdata.currentSection]
-        userdata.transitionId = transitionId
-        userdata.endStateId = userdata.endStateIds[userdata.currentSection]
-        userdata.duration = length
+        if transitionId[0] == "move_base":
+            # go to move base state.
+            return "move_base"
+        else:
+            start = userdata.times[userdata.currentSection]
+            length = userdata.times[userdata.currentSection + 1] - start
 
-        self.status.wait_if_step_by_step("Preparing to read subpath.", 3)
+            userdata.transitionId = transitionId
+            userdata.endStateId = userdata.endStateIds[userdata.currentSection]
+            userdata.duration = length
 
-        self.status.set_description("Preparing publication of subpath {}, action {}."
-                .format(userdata.pathId, transitionId[0]))
-        manip = self.hppclient._manip()
-        manip.graph.selectGraph(transitionId[1])
-        self.targetPub["read_subpath"].publish(
-            ReadSubPath(userdata.pathId, start, length)
-        )
-        rospy.loginfo("Start reading subpath.")
-        return "next"
+            self.status.wait_if_step_by_step("Preparing to read subpath.", 3)
+
+            self.status.set_description("Preparing publication of subpath {}, action {}."
+                    .format(userdata.pathId, transitionId[0]))
+            manip = self.hppclient._manip()
+            manip.graph.selectGraph(transitionId[1])
+            self.targetPub["read_subpath"].publish(
+                ReadSubPath(userdata.pathId, start, length)
+            )
+            rospy.loginfo("Start reading subpath.")
+            return "next"
