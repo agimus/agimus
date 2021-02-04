@@ -78,7 +78,7 @@ class _Feedback:
         rospy.loginfo("Feedback: sending goal " + str(t))
         rsp = self.get_pose(t)
         goal = MoveBaseGoal()
-        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.frame_id = "world"
         goal.target_pose.pose = rsp.pose
         self._started=False
         self._goal = _PoseToSE3(rsp.pose)
