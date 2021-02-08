@@ -144,8 +144,44 @@ class MoveBase(smach.State):
         )
 
         self.axclient = SimpleActionClient("/move_base", MoveBaseAction)
+        self.move_base_methods = {
+                "sequential": self.sequential,
+                "full_path": self.full_path,
+                }
+        for name, default in (
+                ("move_base_method", "sequential"),
+                ("move_base_sequential/step", 0.1),
+                ("move_base_sequential/distance_thr", 0.3),
+                ):
+            if not rospy.has_param(name):
+                rospy.set_param(name, default)
+
 
     def execute(self, userdata):
+        method = rospy.get_param('move_base_method', 'sequential')
+        if method not in self.move_base_methods:
+            rospy.logwarn("Method {} not available. Available methods are {}. Falling back to sequential"
+                    .format(method,self.move_base_methods.keys()))
+            method = sequential
+        return self.move_base_methods[method](userdata)
+
+    def full_path(self, userdata):
+        pathId = userdata.pathId
+        start = userdata.times[userdata.currentSection]
+        end = userdata.times[userdata.currentSection + 1]
+
+        rsp = self.serviceProxies["hpp"]["target"]["get_base_pose_at_param"](pathId, end)
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = "world"
+        goal.target_pose.pose = rsp.pose
+        result = self.axclient.send_goal_and_wait(goal)
+
+        if result == GoalStatus.SUCCEEDED:
+            return "succeeded"
+        rospy.logerr("Failed to move base. Result is {}".format(_demangle_status(result)))
+        return "preempted"
+
+    def sequential(self, userdata):
         pathId = userdata.pathId
         start = userdata.times[userdata.currentSection]
         end = userdata.times[userdata.currentSection + 1]
@@ -153,7 +189,9 @@ class MoveBase(smach.State):
         client = _Feedback(self.axclient,
                 lambda t: self.serviceProxies["hpp"]["target"]["get_base_pose_at_param"](pathId, t),
                 start, end,
-                step=0.1)
+                step=rospy.get_param("move_base_sequential/step", 0.1),
+                distance_thr=rospy.get_param("move_base_sequential/distance_thr", 0.03),
+                )
 
         rate = rospy.Rate(10)
         while not client.path_completed:
