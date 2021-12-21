@@ -231,8 +231,15 @@ class PlayPath(smach.State):
                     raise ErrorEvent(
                         "Could not read queues for pre-action: " + rsp.message
                     )
-                self._wait_for_event_done(rate, "pre-actions")
-                self.status.wait_if_step_by_step("Pre-action ended.", 2)
+                # if service "run_pre_action" returns a start_time equal to
+                # -1, it means that no pre action is defined for this
+                # transition. Thus, do not wait for completion.
+                if status.start_time != -1:
+                    self._wait_for_event_done(rate, "pre-actions")
+                    self.status.wait_if_step_by_step("Pre-action ended.", 2)
+            else:
+                rospy.logerr(status.msg)
+                return "preempted"
 
             rospy.loginfo("Publishing path")
             self.path_published = False
@@ -291,7 +298,11 @@ class PlayPath(smach.State):
                 self.status.set_description("Executing post-action {}, subpath {}."
                         .format(transition_identifier, userdata.currentSection))
                 self.event_done_min_time = rsp.start_time
-                self._wait_for_event_done(rate, "post-action")
+                # if service "run_post_action" returns a start_time equal to
+                # -1, it means that no post action is defined for this
+                # transition. Thus, do not wait for completion.
+                if status.start_time != -1:
+                    self._wait_for_event_done(rate, "post-action")
                 self.status.wait_if_step_by_step("Post-action ended.", 2)
 
             return "succeeded"
