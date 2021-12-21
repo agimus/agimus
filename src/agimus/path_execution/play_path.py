@@ -201,7 +201,8 @@ class PlayPath(smach.State):
                 self.serviceProxies["agimus"]["sot"]["clear_queues"]()
                 userdata.queue_initialized = True
                 first_published = True
-                rospy.loginfo("Queues initialized.")
+                rospy.loginfo("{}: queues initialized.".format\
+                              (transition_identifier))
 
             # TODO Check that the current SOT and the future SOT are compatible ?
             self.serviceProxies["agimus"]["sot"]["clear_queues"]()
@@ -211,7 +212,8 @@ class PlayPath(smach.State):
             if status.success:
                 self.status.set_description("Executing pre-action {}, subpath {}."
                         .format(transition_identifier, userdata.currentSection))
-                rospy.loginfo("Start pre-action")
+                rospy.loginfo("{}: start pre-action".format\
+                              (transition_identifier))
                 if not first_published:
                     rsp = self.serviceProxies["hpp"]["target"]["publish_first"]()
                     if not rsp.success:
@@ -241,7 +243,7 @@ class PlayPath(smach.State):
                 rospy.logerr(status.msg)
                 return "preempted"
 
-            rospy.loginfo("Publishing path")
+            rospy.loginfo("{}: publishing path".format(transition_identifier))
             self.path_published = False
             self.serviceProxies["agimus"]["sot"]["clear_queues"]()
             queueSize = self.serviceProxies["hpp"]["target"]["get_queue_size"]().data
@@ -257,7 +259,8 @@ class PlayPath(smach.State):
                 return "preempted"
 
             # self.control_norm_ok = False
-            rospy.loginfo("Read queue (size {})".format(queueSize))
+            rospy.loginfo("{}: read queue (size {})".format\
+                          (transition_identifier, queueSize))
             # SoT should wait to have a queue larger than 1. This ensures that read_queue won't run into
             # an infinite loop for a very short path (i.e. one configuration only).
             # SoT should not wait to have a queue larger than 100ms
@@ -289,7 +292,7 @@ class PlayPath(smach.State):
             self.status.wait_if_step_by_step("Action ended.", 2)
 
             # Run post action if any
-            rospy.loginfo("Start post-action")
+            rospy.loginfo("{}: start post-action".format(transition_identifier))
             status = self.serviceProxies["agimus"]["sot"]["run_post_action"](
                 userdata.endStateId[0], userdata.endStateId[1]
             )
