@@ -20,6 +20,7 @@ ENDFOREACH()
 
 SET (PYTHON_FILE
     path_execution.py
+    tooltip_calibration.py
     simulation.py
     __init__.py)
 

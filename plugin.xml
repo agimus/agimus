@@ -33,4 +33,21 @@
       <statustip>Open a GUI to supervise simulation in Agimus.</statustip>
     </qtgui>
   </class>
+  <class name="Tooltip Calibration"
+	 type="rqt_agimus.tooltip_calibration.TooltipCalibration"
+	 base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A Python GUI plugin to calibrate the tooltip position in end effector frame
+    </description>
+    <qtgui>
+      <group>
+        <label>Agimus</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to Agimus.</statustip>
+      </group>
+      <label>Agimus tooltip calibration</label>
+      <icon type="theme">applications-python</icon>
+      <statustip>Open a GUI to calibrate the tooltip.</statustip>
+    </qtgui>
+  </class>
 </library>

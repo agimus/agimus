@@ -54,6 +54,7 @@ INSTALL(FILES plugin.xml
 INSTALL(PROGRAMS
   scripts/path_execution_fsm.py
   scripts/rqt_path_execution
+  scripts/rqt_tooltip_calibration
   scripts/ros_synchro
   scripts/simulate_time
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts)
