@@ -24,7 +24,7 @@ from agimus_sot.srdf_parser import parse_srdf
 #  Todo: make names of handle and gripper parameterizable.
 
 class TooltipCalibration(Plugin):
-    _verbose = True
+    _verbose = False
     runCommandService="/run_command"
     initCommands = [
         "import numpy as np",
@@ -68,8 +68,8 @@ class TooltipCalibration(Plugin):
 
         row += 1
         xSlider = QSlider(Qt.Horizontal)
-        xSlider.setMinimum(-100)
-        xSlider.setMaximum(100)
+        xSlider.setMinimum(-200)
+        xSlider.setMaximum(200)
         xSlider.setValue(0)
         xSlider.valueChanged.connect(self.xChanged)
         label = QLabel("x")
@@ -83,8 +83,8 @@ class TooltipCalibration(Plugin):
         row+=1
 
         ySlider = QSlider(Qt.Horizontal)
-        ySlider.setMinimum(-100)
-        ySlider.setMaximum(100)
+        ySlider.setMinimum(-200)
+        ySlider.setMaximum(200)
         ySlider.setValue(0)
         ySlider.valueChanged.connect(self.yChanged)
         label = QLabel("y")
@@ -97,8 +97,8 @@ class TooltipCalibration(Plugin):
 
         row+=1
         zSlider = QSlider(Qt.Horizontal)
-        zSlider.setMinimum(-100)
-        zSlider.setMaximum(100)
+        zSlider.setMinimum(-200)
+        zSlider.setMaximum(200)
         zSlider.setValue(0)
         zSlider.valueChanged.connect(self.zChanged)
         label = QLabel("z")
@@ -127,18 +127,18 @@ class TooltipCalibration(Plugin):
         self.initializeSot()
 
     def xChanged(self, val):
-        self.xValue.setText("{:.3f}".format(1e-3*val))
-        self._translation[0] = 1e-3*val
+        self.xValue.setText("{:.4f}".format(1e-4*val))
+        self._translation[0] = 1e-4*val
         self.setSignalValue()
 
     def yChanged(self, val):
-        self.yValue.setText("{:.3f}".format(1e-3*val))
-        self._translation[1] = 1e-3*val
+        self.yValue.setText("{:.4f}".format(1e-4*val))
+        self._translation[1] = 1e-4*val
         self.setSignalValue()
 
     def zChanged(self, val):
-        self.zValue.setText("{:.3f}".format(1e-3*val))
-        self._translation[2] = 1e-3*val
+        self.zValue.setText("{:.4f}".format(1e-4*val))
+        self._translation[2] = 1e-4*val
         self.setSignalValue()
 
     def handleIdChanged(self, val):
