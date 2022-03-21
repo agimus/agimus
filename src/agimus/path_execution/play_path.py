@@ -97,6 +97,9 @@ class PlayPath(smach.State):
         self.targetPub = ros_tools.createPublishers(
             "/hpp/target", self.hppTargetPubDict
         )
+        self.pathFailedTopic = "/agimus/status/path_failed"
+        self.pathFailedPublisher = rospy.Publisher(self.pathFailedTopic, String, queue_size=1)
+
         self.subscribers = ros_tools.createSubscribers(self, "", self.subscribersDict)
         self.serviceProxies = ros_tools.createServiceProxies(
             "", PlayPath.serviceProxiesDict
@@ -195,6 +198,7 @@ class PlayPath(smach.State):
                     )
                 rsp = self.serviceProxies["agimus"]["sot"]["wait_for_min_queue_size"](1, 1.)
                 if not rsp.success:
+                    self.pathFailedPublisher.publish()
                     raise ErrorEvent(
                         "Did not receive the first message for initialization: " + rsp.message
                     )

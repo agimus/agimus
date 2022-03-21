@@ -33,13 +33,15 @@ import std_srvs.srv
 from agimus_hpp import ros_tools
 from agimus_sot_msgs.msg import ReadSubPath
 from agimus_sot_msgs.srv import PlugSot
+from std_msgs.msg import Empty
 
 ## State of \c smach finite-state machine
 #
 #  See method \link agimus.path_execution.initialize_path.InitializePath.execute
 #  execute \endlink for details.
 class InitializePath(smach.State):
-    hppTargetPubDict = {"read_subpath": [ReadSubPath, 1]}
+    hppTargetPubDict = {"/hpp/target/read_subpath": [ReadSubPath, 1],
+                        "/agimus/status/path_success": [Empty, 1]}
     serviceProxiesDict = {
         "agimus": {
             "sot": {
@@ -67,12 +69,13 @@ class InitializePath(smach.State):
         self.status = status
 
         self.targetPub = ros_tools.createPublishers(
-            "/hpp/target", self.hppTargetPubDict
+            "", self.hppTargetPubDict
         )
         self.serviceProxies = ros_tools.createServiceProxies(
             "", InitializePath.serviceProxiesDict
         )
         self.hppclient = hppclient
+
 
     ## Initialize the trajectory publisher.
     #
@@ -96,6 +99,7 @@ class InitializePath(smach.State):
             status = self.serviceProxies["agimus"]["sot"]["plug_sot"]("", "")
             if not status.success:
                 rospy.logerr ("Could not change controller to 'keep_posture': " + status.msg)
+            self.targetPub["/agimus/status/path_success"].publish()
             return "finished"
 
         transitionId = userdata.transitionIds[userdata.currentSection]
@@ -116,7 +120,7 @@ class InitializePath(smach.State):
                     .format(userdata.pathId, transitionId[0]))
             manip = self.hppclient._manip()
             manip.graph.selectGraph(transitionId[1])
-            self.targetPub["read_subpath"].publish(
+            self.targetPub["/hpp/target/read_subpath"].publish(
                 ReadSubPath(userdata.pathId, start, length)
             )
             rospy.loginfo("Start reading subpath.")
