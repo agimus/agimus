@@ -49,9 +49,10 @@ add_project_dependency(agimus_sot_msgs)
 ADD_SUBDIRECTORY(src)
 
 INSTALL(FILES plugin.xml
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 INSTALL(PROGRAMS
+  scripts/monitor
   scripts/path_execution_fsm.py
   scripts/rqt_path_execution
   scripts/ros_synchro

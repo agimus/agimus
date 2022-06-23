@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+# 2-Clause BSD License
+
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+# OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# This script monitors some topics and record the times when these topics are
+# published
+import os
+import csv
+import rospy
+from std_msgs.msg import Int32, UInt32, Bool, String
+from std_srvs.srv import Trigger, TriggerResponse
+
+class Monitor(object):
+    def __init__(self):
+        rospy.init_node("agimus_monitoring")
+        # subscribe to topics of interest
+        self.subscribers = dict()
+        self.subscribers["event_done"] = \
+            rospy.Subscriber("/agimus/sot/event/done", Int32, self.event_done)
+        self.subscribers["is_waiting_for_event_done"] = \
+            rospy.Subscriber("/agimus/status/is_waiting_for_event_done", Bool,
+                             self.is_waiting_for_event_done)
+        self.subscribers["start_path"] = \
+            rospy.Subscriber("/agimus/start_path", UInt32, self.start_path)
+        self.data = list()
+        self.subscribers["description"] = \
+            rospy.Subscriber("/agimus/status/description", String,
+                             self.description)
+        # provide service to save data
+        self.services = dict()
+        self.services["save"] = rospy.Service('agimus/monitor/save', Trigger, self.save)
+
+    def event_done(self, msg):
+        time = rospy.get_time()
+        self.data.append([time, "event_done", msg.data])
+
+    def is_waiting_for_event_done(self, msg):
+        time = rospy.get_time()
+        self.data.append([time, "wait_for_event_done", msg.data])
+
+    def start_path(self, msg):
+        time = rospy.get_time()
+        self.data.append([time, "start_path", msg.data])
+
+    def description(self, msg):
+        time = rospy.get_time()
+        self.data.append([time, "status", msg.data])
+
+    def save(self, req):
+        try:
+            if not os.path.isdir('/tmp/agimus'):
+                os.mkdir('/tmp/agimus')
+            f = open('/tmp/agimus/events.csv', 'w')
+            w = csv.writer(f)
+            for d in self.data:
+                w.writerow(d)
+        except Exception as exc:
+            return TriggerResponse(False, str(exc))
+        return TriggerResponse(True, "")
+            
+if __name__ == "__main__":
+    try:
+        m = Monitor()
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass
+
