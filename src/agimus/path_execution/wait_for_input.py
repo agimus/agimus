@@ -134,6 +134,35 @@ class WaitForInput(smach.State):
             hpp = self.hppclient._hpp()
             manip = self.hppclient._manip()
             qs, ts = hpp.problem.getWaypoints(pid)
+
+            # Get config to detect inconsistency between start configuration and current config
+            from hpp.corbaserver.manipulation import Robot
+            from sensor_msgs.msg import JointState
+
+            robot2 = Robot(load=False)
+            robotParam = rospy.get_param("/demo")["robots"]
+            robotPrefix = list(robotParam.keys())[0] +"/"
+
+            q_current = qs[0][:]
+            # Acquire robot state
+            msg = rospy.wait_for_message("/joint_states", JointState)
+            for ni, qi in zip(msg.name, msg.position):
+                jni = robotPrefix + ni
+                if robot2.getJointConfigSize(jni) != 1:
+                    continue
+                try:
+                    rk = robot2.rankInConfiguration[jni]
+                except KeyError:
+                    continue
+                assert robot2.getJointConfigSize(jni) == 1
+                q_current[rk] = qi
+
+            for qci,qsi in zip(q_current,qs[0]):
+                if abs(qci - qsi) > 8*10**-2:
+                    rospy.logerr(f"Agimus : Start configuration of path doesn't match with the current configuration : start config :{qs[0]}, current config:{q_current}")
+                    return "failed_to_start"
+            # End of consistency check
+
             # Add a first section to force going to init pose.
             # ts: list of transition times. The first one is repeated to make the robot
             # move to the initial configuration before any other motion.
