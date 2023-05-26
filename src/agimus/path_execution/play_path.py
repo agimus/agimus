@@ -32,7 +32,7 @@ import smach
 import smach_ros
 import std_srvs.srv
 from agimus_hpp import ros_tools
-from agimus_sot_msgs.srv import GetInt, PlugSot, ReadQueue, WaitForMinQueueSize
+from agimus_sot_msgs.srv import GetInt, PlugSot, ReadQueue, WaitForQueueRecData
 from std_msgs.msg import Empty, Int32, String, UInt32
 from .initialize_path import InitializePath
 from .wait_for_input import WaitForInput
@@ -72,7 +72,7 @@ class PlayPath(smach.State):
                 "plug_sot": [PlugSot],
                 "run_post_action": [PlugSot],
                 "clear_queues": [std_srvs.srv.Trigger],
-                "wait_for_min_queue_size": [WaitForMinQueueSize],
+                "wait_for_queue_rec_data": [WaitForQueueRecData],
                 "read_queue": [ReadQueue],
                 "stop_reading_queue": [std_srvs.srv.Empty],
             }
@@ -196,7 +196,7 @@ class PlayPath(smach.State):
                     raise ErrorEvent(
                         "Could not initialize the queues in SoT: " + rsp.message
                     )
-                rsp = self.serviceProxies["agimus"]["sot"]["wait_for_min_queue_size"](1, 1.)
+                rsp = self.serviceProxies["agimus"]["sot"]["wait_for_queue_rec_data"](1.0)
                 if not rsp.success:
                     self.pathFailedPublisher.publish()
                     raise ErrorEvent(
