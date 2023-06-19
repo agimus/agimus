@@ -33,7 +33,7 @@ import smach_ros
 import std_srvs.srv
 from agimus_hpp import ros_tools
 from agimus_sot_msgs.srv import GetInt, PlugSot, ReadQueue, WaitForQueueRecData
-from std_msgs.msg import Empty, Int32, String, UInt32
+from std_msgs.msg import Empty, Int64, String
 from .initialize_path import InitializePath
 from .wait_for_input import WaitForInput
 from .error_state import ErrorState
@@ -57,8 +57,8 @@ class PlayPath(smach.State):
         "agimus": {
             "sot": {
                 "event": {
-                    "error": [Int32, "_handleEventError"],
-                    "done": [Int32, "_handleEventDone"],
+                    "error": [Int64, "_handleEventError"],
+                    "done": [Int64, "_handleEventDone"],
                 },
                 "interrupt": [String, "_handleInterrupt"],
             }

@@ -11,7 +11,7 @@ from python_qt_binding.QtWidgets import (
     QWidget,
 )
 from qt_gui.plugin import Plugin
-from std_msgs.msg import Empty as EmptyMsg, Bool, Int32, UInt32, String
+from std_msgs.msg import Empty as EmptyMsg, Bool, Int64, UInt32, String
 from std_srvs.srv import Empty as EmptySrv
 
 
@@ -45,10 +45,10 @@ class PathExecution(Plugin):
             PathExecution.PathExecutionTopic, UInt32, queue_size=1
         )
         self.event_done_publisher = rospy.Publisher(
-            PathExecution.EventDoneTopic, Int32, queue_size=1
+            PathExecution.EventDoneTopic, Int64, queue_size=1
         )
         self.event_error_publisher = rospy.Publisher(
-            PathExecution.EventErrorTopic, Int32, queue_size=1
+            PathExecution.EventErrorTopic, Int64, queue_size=1
         )
 
         # Create QWidget
