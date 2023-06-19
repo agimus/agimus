@@ -93,6 +93,12 @@ class PlayPath(smach.State):
             output_keys=["queue_initialized"],
         )
         self.status = status
+        self.path_published = False
+        self.event_done = None
+        self.event_error = None
+        self.event_done_min_time = 0
+        self.interruption = None
+        self.event_done_count = 0
 
         self.targetPub = ros_tools.createPublishers(
             "/hpp/target", self.hppTargetPubDict
@@ -104,13 +110,6 @@ class PlayPath(smach.State):
         self.serviceProxies = ros_tools.createServiceProxies(
             "", PlayPath.serviceProxiesDict
         )
-
-        self.path_published = False
-        self.event_done = None
-        self.event_error = None
-        self.event_done_min_time = 0
-        self.interruption = None
-        self.event_done_count = 0
 
     def _handleEventError(self, msg):
         self.event_error = msg.data
